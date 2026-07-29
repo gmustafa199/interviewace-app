@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The EdTech Builder's Action Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+@page { size: 720px 1020px; margin: 0; }
+:root {
+    --c-bg: #0a0a0f;
+    --c-surface: #14141c;
+    --c-surface-2: #1c1c28;
+    --c-surface-3: #22222e;
+    --c-text: #e8e6e3;
+    --c-text-dim: #9a9aa5;
+    --c-text-faint: #5c5c68;
+    --c-amber: #f5a524;
+    --c-amber-soft: rgba(245,165,36,0.12);
+    --c-indigo: #818cf8;
+    --c-indigo-soft: rgba(129,140,248,0.12);
+    --c-green: #4ade80;
+    --c-line: #2a2a38;
+}
+* { box-sizing: border-box; }
+html, body {
+    margin: 0; padding: 0; width: 720px;
+    background: var(--c-bg); color: var(--c-text);
+    font-family: 'Inter', sans-serif; font-weight: 400;
+    font-size: 13px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+@media screen {
+    html { height: auto; display: flex; justify-content: center; background: #222; }
+    body { margin: 20px auto; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+}
+
+/* ============ COVER ============ */
+.cover {
+    width: 720px; height: 1020px;
+    break-after: page; overflow: hidden;
+    background: var(--c-bg); position: relative;
+    padding: 70px 60px; display: flex; flex-direction: column; justify-content: space-between;
+}
+.cover::before {
+    content: ""; position: absolute; top: -120px; right: -120px;
+    width: 480px; height: 480px; border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(245,165,36,0.22), transparent 65%);
+    z-index: 0;
+}
+.cover::after {
+    content: ""; position: absolute; bottom: -180px; left: -100px;
+    width: 420px; height: 420px; border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(129,140,248,0.18), transparent 65%);
+    z-index: 0;
+}
+.cover .top { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; }
+.cover .badge {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.25em; color: var(--c-amber); text-transform: uppercase;
+    border: 1px solid rgba(245,165,36,0.4); padding: 6px 12px; border-radius: 2px;
+}
+.cover .meta-top {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.15em; color: var(--c-text-faint); text-align: right; line-height: 1.6;
+}
+.cover .center { position: relative; z-index: 2; margin-top: 60px; }
+.cover .eyebrow {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.35em; color: var(--c-indigo); text-transform: uppercase;
+    margin-bottom: 28px;
+}
+.cover .title {
+    font-family: 'Playfair Display', serif; font-weight: 900;
+    font-size: 68px; line-height: 0.98; letter-spacing: -0.02em;
+    color: var(--c-text); margin: 0 0 26px 0;
+}
+.cover .title .accent { color: var(--c-amber); font-style: italic; font-weight: 400; }
+.cover .subtitle {
+    font-family: 'Inter', sans-serif; font-weight: 300;
+    font-size: 17px; line-height: 1.55; color: var(--c-text-dim);
+    max-width: 500px; margin: 0;
+}
+.cover .rule { width: 80px; height: 2px; background: var(--c-amber); margin: 32px 0 24px 0; }
+.cover .pillars { display: flex; gap: 24px; margin-top: 32px; }
+.cover .pillar { flex: 1; border-left: 2px solid var(--c-line); padding-left: 14px; }
+.cover .pillar .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 0.2em; color: var(--c-text-faint);
+    text-transform: uppercase; margin-bottom: 6px;
+}
+.cover .pillar .value {
+    font-family: 'Playfair Display', serif; font-size: 20px;
+    font-weight: 700; color: var(--c-text); line-height: 1.1;
+}
+.cover .bottom {
+    position: relative; z-index: 2;
+    display: flex; justify-content: space-between; align-items: flex-end;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.18em; color: var(--c-text-faint); text-transform: uppercase;
+}
+
+/* ============ MAIN CONTENT ============ */
+.main-content { padding: 44px 56px 32px 56px; }
+
+.chapter-header { break-after: avoid; break-inside: avoid; margin-top: 18px; margin-bottom: 14px; }
+.chapter-header:first-child { margin-top: 0; }
+.chapter-tag {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.3em; color: var(--c-amber); text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.chapter-title {
+    font-family: 'Playfair Display', serif; font-weight: 700;
+    font-size: 30px; line-height: 1.1; letter-spacing: -0.01em;
+    color: var(--c-text); margin: 0 0 8px 0;
+}
+.chapter-title .accent { color: var(--c-amber); font-style: italic; font-weight: 400; }
+.chapter-lede {
+    font-family: 'Inter', sans-serif; font-weight: 300; font-size: 14px;
+    line-height: 1.5; color: var(--c-text-dim); margin: 0 0 18px 0;
+    max-width: 580px;
+}
+.section-rule { width: 60px; height: 2px; background: var(--c-line); margin: 18px 0; }
+
+h3 {
+    font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14px;
+    letter-spacing: 0.04em; color: var(--c-text); margin: 18px 0 8px 0;
+    text-transform: uppercase;
+}
+h4 {
+    font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 10px;
+    letter-spacing: 0.18em; color: var(--c-indigo); text-transform: uppercase;
+    margin: 16px 0 6px 0;
+}
+p { margin: 0 0 12px 0; color: var(--c-text); }
+p.lead {
+    font-size: 15px; line-height: 1.55; color: var(--c-text); font-weight: 400;
+}
+strong { color: var(--c-text); font-weight: 600; }
+em { color: var(--c-amber); font-style: italic; }
+
+ul, ol { margin: 0 0 12px 0; padding-left: 18px; }
+li { margin-bottom: 6px; color: var(--c-text-dim); line-height: 1.55; }
+li strong { color: var(--c-text); }
+
+/* ============ STEP PAGE LAYOUT ============ */
+.step-page { break-before: page; padding: 40px 56px 28px 56px; }
+.step-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 12px; border-bottom: 1px solid var(--c-line);
+    margin-bottom: 18px;
+}
+.step-meta .left { display: flex; align-items: center; gap: 16px; }
+.step-num {
+    font-family: 'Playfair Display', serif; font-weight: 900;
+    font-size: 40px; color: var(--c-amber); line-height: 1; font-style: italic;
+}
+.step-meta .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.3em; color: var(--c-text-faint); text-transform: uppercase;
+}
+.step-meta .name {
+    font-family: 'Playfair Display', serif; font-weight: 700;
+    font-size: 22px; color: var(--c-text); line-height: 1.1; margin-top: 2px;
+}
+.step-meta .right {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.2em; color: var(--c-indigo); text-transform: uppercase;
+    text-align: right; line-height: 1.6;
+    border: 1px solid rgba(129,140,248,0.3); padding: 8px 14px; border-radius: 2px;
+}
+
+.goal-box {
+    background: var(--c-surface); border-left: 3px solid var(--c-amber);
+    padding: 12px 18px; margin: 14px 0; border-radius: 0 2px 2px 0;
+}
+.goal-box .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 0.3em; color: var(--c-amber); text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.goal-box .text {
+    font-family: 'Playfair Display', serif; font-size: 16px;
+    color: var(--c-text); line-height: 1.35; font-style: italic;
+}
+
+/* ============ PROMPT BOX (THE KEY ELEMENT) ============ */
+.prompt-box {
+    background: #1a1a24; border: 1px solid var(--c-amber);
+    border-radius: 4px; margin: 14px 0; overflow: hidden;
+    break-inside: avoid;
+}
+.prompt-box .header {
+    background: var(--c-amber-soft); padding: 7px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(245,165,36,0.3);
+}
+.prompt-box .header .title {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.25em; color: var(--c-amber); text-transform: uppercase;
+    font-weight: 600;
+}
+.prompt-box .header .hint {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    color: var(--c-text-faint); letter-spacing: 0.1em;
+}
+.prompt-box .body {
+    padding: 12px 16px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; line-height: 1.6; color: var(--c-text);
+    white-space: pre-wrap; word-wrap: break-word;
+}
+.prompt-box .body .var {
+    background: var(--c-indigo-soft); color: var(--c-indigo);
+    padding: 1px 6px; border-radius: 2px; font-weight: 500;
+}
+.prompt-box .body .comment { color: var(--c-text-faint); font-style: italic; }
+
+/* ============ PREP LIST ============ */
+.prep-list {
+    background: var(--c-surface); padding: 12px 18px;
+    border-radius: 4px; margin: 12px 0;
+    break-inside: avoid;
+}
+.prep-list .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 0.3em; color: var(--c-indigo); text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.prep-list ul { margin: 0; padding-left: 18px; }
+.prep-list li { margin-bottom: 4px; color: var(--c-text); font-size: 12.5px; line-height: 1.5; }
+.prep-list li::marker { color: var(--c-indigo); }
+
+/* ============ DELIVERABLES ============ */
+.deliver-box {
+    background: var(--c-surface-2); padding: 12px 18px;
+    border-radius: 4px; margin: 12px 0;
+    border-left: 3px solid var(--c-green);
+    break-inside: avoid;
+}
+.deliver-box .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 0.3em; color: var(--c-green); text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.deliver-box ul { margin: 0; padding-left: 18px; }
+.deliver-box li { margin-bottom: 4px; color: var(--c-text); font-size: 12.5px; line-height: 1.5; }
+.deliver-box li::marker { color: var(--c-green); }
+
+/* ============ NEXT MOVE ============ */
+.next-move {
+    background: linear-gradient(135deg, rgba(245,165,36,0.08), rgba(129,140,248,0.08));
+    border: 1px solid var(--c-line); border-radius: 4px;
+    padding: 12px 18px; margin: 14px 0;
+    break-inside: avoid;
+}
+.next-move .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 0.3em; color: var(--c-text); text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.next-move .text {
+    font-family: 'Inter', sans-serif; font-size: 13px;
+    color: var(--c-text); line-height: 1.5; font-weight: 500;
+}
+.next-move .text strong { color: var(--c-amber); }
+
+/* ============ CALLOUT ============ */
+.callout {
+    background: var(--c-surface); border-radius: 4px; padding: 14px 18px;
+    margin: 14px 0; break-inside: avoid;
+    border-left: 3px solid var(--c-indigo);
+}
+.callout .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 0.3em; color: var(--c-indigo); text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.callout p { margin: 0; color: var(--c-text-dim); font-size: 12.5px; line-height: 1.55; }
+.callout p strong { color: var(--c-text); }
+
+/* ============ TABLE ============ */
+.table-wrap { margin: 18px 0; break-inside: avoid; }
+table {
+    width: 100%; border-collapse: collapse;
+    font-family: 'Inter', sans-serif; font-size: 12px;
+}
+th {
+    text-align: left; padding: 10px 14px; background: var(--c-surface-2);
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.15em; color: var(--c-amber); text-transform: uppercase;
+    border-bottom: 1px solid var(--c-line);
+}
+td {
+    padding: 10px 14px; border-bottom: 1px solid var(--c-line);
+    color: var(--c-text-dim); vertical-align: top;
+}
+td strong { color: var(--c-text); }
+
+/* ============ ROADMAP ============ */
+.roadmap {
+    display: flex; flex-direction: column; gap: 0;
+    margin: 24px 0;
+}
+.roadmap-item {
+    display: flex; align-items: stretch; gap: 0;
+    break-inside: avoid;
+}
+.roadmap-item .num {
+    width: 60px; min-height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif; font-weight: 900;
+    font-size: 32px; color: var(--c-amber); font-style: italic;
+    border-right: 2px solid var(--c-amber);
+    background: var(--c-amber-soft);
+}
+.roadmap-item .body {
+    flex: 1; padding: 12px 18px; background: var(--c-surface);
+    border-bottom: 1px solid var(--c-line);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.roadmap-item:last-child .body { border-bottom: none; }
+.roadmap-item .body .left .name {
+    font-family: 'Playfair Display', serif; font-weight: 700;
+    font-size: 16px; color: var(--c-text); margin-bottom: 2px;
+}
+.roadmap-item .body .left .goal {
+    font-size: 12px; color: var(--c-text-dim); line-height: 1.4;
+}
+.roadmap-item .body .time {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--c-indigo); letter-spacing: 0.15em;
+    text-transform: uppercase; white-space: nowrap;
+    padding-left: 16px;
+}
+
+/* ============ CHECKLIST ============ */
+.checklist {
+    background: var(--c-surface); padding: 20px 24px;
+    border-radius: 4px; margin: 16px 0; break-inside: avoid;
+}
+.checklist .item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid var(--c-line);
+}
+.checklist .item:last-child { border-bottom: none; }
+.checklist .box {
+    width: 16px; height: 16px; border: 2px solid var(--c-amber);
+    border-radius: 2px; flex-shrink: 0; margin-top: 2px;
+}
+.checklist .text { flex: 1; font-size: 13px; color: var(--c-text); line-height: 1.5; }
+.checklist .text strong { color: var(--c-amber); }
+
+/* ============ STAT BLOCKS ============ */
+.stat-row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px; margin: 20px 0;
+}
+.stat-block {
+    background: var(--c-surface); padding: 18px 16px;
+    border-radius: 4px; border-top: 2px solid var(--c-amber);
+    break-inside: avoid;
+}
+.stat-block .value {
+    font-family: 'Playfair Display', serif; font-weight: 700;
+    font-size: 28px; color: var(--c-text); line-height: 1;
+    margin-bottom: 6px;
+}
+.stat-block .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 0.2em; color: var(--c-text-faint);
+    text-transform: uppercase; line-height: 1.4;
+}
+
+/* ============ PAGE BREAK ============ */
+.page-break { break-before: page; }
+
+/* ============ FOOTER ============ */
+.page-footer {
+    position: fixed; bottom: 20px; left: 60px; right: 60px;
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    color: var(--c-text-faint); letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+/* ============ TOC ============ */
+.toc-list { margin: 24px 0; }
+.toc-item {
+    display: flex; align-items: baseline; gap: 12px;
+    padding: 12px 0; border-bottom: 1px dashed var(--c-line);
+}
+.toc-item .num {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--c-amber); letter-spacing: 0.15em; min-width: 32px;
+}
+.toc-item .name {
+    flex: 1; font-family: 'Inter', sans-serif; font-size: 14px;
+    color: var(--c-text); font-weight: 500;
+}
+.toc-item .desc {
+    font-size: 11px; color: var(--c-text-faint); margin-top: 2px;
+    font-weight: 400;
+}
+.toc-item .time {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--c-indigo); letter-spacing: 0.15em;
+}
+
+/* ============ FAQ ============ */
+.faq-item {
+    background: var(--c-surface); padding: 16px 20px;
+    border-radius: 4px; margin: 12px 0; break-inside: avoid;
+}
+.faq-item .q {
+    font-family: 'Inter', sans-serif; font-weight: 600;
+    font-size: 14px; color: var(--c-amber); margin-bottom: 8px;
+}
+.faq-item .a {
+    font-size: 13px; color: var(--c-text-dim); line-height: 1.6;
+}
+.faq-item .a strong { color: var(--c-text); }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+    <div class="top">
+        <div class="badge">Companion Guide</div>
+        <div class="meta-top">
+            Vol. 02 / Action Guide<br>
+            Plain-English Edition
+        </div>
+    </div>
+    <div class="center">
+        <div class="eyebrow">A Step-by-Step Playbook</div>
+        <h1 class="title">The EdTech<br>Builder's<br><span class="accent">Action Guide</span></h1>
+        <div class="rule"></div>
+        <p class="subtitle">Seven simple steps. Copy-paste prompts. Everything you need to go from idea to launched EdTech company — even if you've never written a line of code.</p>
+        <div class="pillars">
+            <div class="pillar">
+                <div class="label">Steps</div>
+                <div class="value">7</div>
+            </div>
+            <div class="pillar">
+                <div class="label">Prompts</div>
+                <div class="value">12+</div>
+            </div>
+            <div class="pillar">
+                <div class="label">Time</div>
+                <div class="value">24 mo</div>
+            </div>
+            <div class="pillar">
+                <div class="label">Coding</div>
+                <div class="value">Zero</div>
+            </div>
+        </div>
+    </div>
+    <div class="bottom">
+        <div>Founder Playbook / 2026</div>
+        <div>Read once. Use forever.</div>
+    </div>
+</div>
+
+<!-- ============ HOW TO USE ============ -->
+<div class="main-content">
+
+<div class="chapter-header">
+    <div class="chapter-tag">Read This First</div>
+    <h2 class="chapter-title">How to Use This <span class="accent">Guide</span></h2>
+    <p class="chapter-lede">This is the simple version. No jargon. No fluff. Just clear steps and exact words to say to your AI assistant.</p>
+</div>
+
+<p class="lead">If you've read <em>The Billion-Dollar EdTech Blueprint</em>, you already know the strategy. This guide shows you how to <strong>actually do it</strong> — step by step, week by week, with prompts you can copy and paste.</p>
+
+<h4>The Three Rules</h4>
+<ul>
+    <li><strong>One step at a time.</strong> Don't skip ahead. Each step builds on the last.</li>
+    <li><strong>Use the prompts exactly as written.</strong> Replace the bracketed text in <span style="color: var(--c-indigo);">[blue]</span> with your own info, then paste into your AI chat.</li>
+    <li><strong>Ask follow-up questions.</strong> If something doesn't make sense, ask your AI: "Explain this to me like I'm 12."</li>
+</ul>
+
+<h4>What You Need</h4>
+<div class="prep-list">
+    <div class="label">Your Starter Kit</div>
+    <ul>
+        <li>A computer with internet (you already have this)</li>
+        <li>An AI chat tool (this one works perfectly)</li>
+        <li>A notebook or notes app for your answers</li>
+        <li>30 minutes a day, 5 days a week</li>
+        <li>An idea — even a vague one is fine to start</li>
+    </ul>
+</div>
+
+<h4>How Each Step Works</h4>
+<p>Every step in this guide has the same four parts. Once you learn the pattern, you'll fly through them:</p>
+
+<div class="stat-row">
+    <div class="stat-block">
+        <div class="value">1</div>
+        <div class="label">Your Goal<br>What you're trying to do</div>
+    </div>
+    <div class="stat-block">
+        <div class="value">2</div>
+        <div class="label">What to Prepare<br>5-minute homework</div>
+    </div>
+    <div class="stat-block">
+        <div class="value">3</div>
+        <div class="label">Copy-Paste Prompt<br>The exact words to say</div>
+    </div>
+</div>
+<div class="stat-row" style="margin-top: -8px;">
+    <div class="stat-block" style="grid-column: span 3;">
+        <div class="value">4</div>
+        <div class="label">Your Next Move<br>What to do with what you get back</div>
+    </div>
+</div>
+
+<div class="callout">
+    <div class="label">A Note on Patience</div>
+    <p>You will be tempted to skip steps. <strong>Don't.</strong> The founders who fail are the ones who jump to building before they've validated. The founders who win treat this like a recipe — follow it exactly, then customize once you understand the basics.</p>
+</div>
+
+</div>
+
+<!-- ============ THE 7 STEPS AT A GLANCE ============ -->
+<div class="page-break"></div>
+<div class="main-content">
+
+<div class="chapter-header">
+    <div class="chapter-tag">The Roadmap</div>
+    <h2 class="chapter-title">The 7 Steps <span class="accent">at a Glance</span></h2>
+    <p class="chapter-lede">Here's the whole journey on one page. Each step gets its own detailed page later in this guide.</p>
+</div>
+
+<div class="roadmap">
+    <div class="roadmap-item">
+        <div class="num">1</div>
+        <div class="body">
+            <div class="left">
+                <div class="name">Lock Your Thesis</div>
+                <div class="goal">Pick a learner, a problem, and a promise in one sentence</div>
+            </div>
+            <div class="time">Week 1–2</div>
+        </div>
+    </div>
+    <div class="roadmap-item">
+        <div class="num">2</div>
+        <div class="body">
+            <div class="left">
+                <div class="name">Validate Your Market</div>
+                <div class="goal">Talk to 20 real learners and confirm they'll pay</div>
+            </div>
+            <div class="time">Week 3–4</div>
+        </div>
+    </div>
+    <div class="roadmap-item">
+        <div class="num">3</div>
+        <div class="body">
+            <div class="left">
+                <div class="name">Build Your MVP with AI</div>
+                <div class="goal">A working product you can charge for — no coding needed</div>
+            </div>
+            <div class="time">Month 2–3</div>
+        </div>
+    </div>
+    <div class="roadmap-item">
+        <div class="num">4</div>
+        <div class="body">
+            <div class="left">
+                <div class="name">Launch to 100 Paying Users</div>
+                <div class="goal">Get your first $5,000 in revenue</div>
+            </div>
+            <div class="time">Month 4–6</div>
+        </div>
+    </div>
+    <div class="roadmap-item">
+        <div class="num">5</div>
+        <div class="body">
+            <div class="left">
+                <div class="name">Scale to 10,000 Users</div>
+                <div class="goal">Grow 10x using channels that actually work</div>
+            </div>
+            <div class="time">Month 7–12</div>
+        </div>
+    </div>
+    <div class="roadmap-item">
+        <div class="num">6</div>
+        <div class="body">
+            <div class="left">
+                <div class="name">Raise Your Round</div>
+                <div class="goal">Raise $1M–$5M to fuel growth</div>
+            </div>
+            <div class="time">Month 10–15</div>
+        </div>
+    </div>
+    <div class="roadmap-item">
+        <div class="num">7</div>
+        <div class="body">
+            <div class="left">
+                <div class="name">Build Your Operating System</div>
+                <div class="goal">Turn yourself into a billion-dollar CEO</div>
+            </div>
+            <div class="time">Month 13–24</div>
+        </div>
+    </div>
+</div>
+
+<div class="callout">
+    <div class="label">The Truth</div>
+    <p>Steps 1–3 are the hardest. Most founders quit here. If you make it to Step 4 with paying customers, you've already beaten 90% of people who start. <strong>Steps 4–7 are about scale, not survival.</strong></p>
+</div>
+
+</div>
+
+<!-- ============ STEP 1: LOCK YOUR THESIS ============ -->
+<div class="step-page">
+    <div class="step-meta">
+        <div class="left">
+            <div class="step-num">01</div>
+            <div>
+                <div class="label">Step One</div>
+                <div class="name">Lock Your Thesis</div>
+            </div>
+        </div>
+        <div class="right">Week 1–2<br>~5 hours</div>
+    </div>
+
+    <div class="goal-box">
+        <div class="label">Your Goal</div>
+        <div class="text">Write one clear sentence that says who you teach, what problem you solve, and what they get.</div>
+    </div>
+
+    <p>If you can't explain your company in one sentence, you don't have a company yet — you have a vibe. This step kills the vibe and forces clarity.</p>
+
+    <h4>What to Prepare (10 minutes)</h4>
+    <div class="prep-list">
+        <div class="label">Before You Start</div>
+        <ul>
+            <li>Open a blank document</li>
+            <li>Write down 3 groups of people you know well (e.g., "college students studying CS," "moms returning to work," "real estate agents")</li>
+            <li>Pick the one you care about most</li>
+            <li>Write 5 problems that group complains about</li>
+        </ul>
+    </div>
+
+    <h4>Copy-Paste This Prompt</h4>
+    <div class="prompt-box">
+        <div class="header">
+            <div class="title">→ Paste this into your AI chat</div>
+            <div class="hint">Edit the [blue] parts</div>
+        </div>
+        <div class="body">I'm building an EdTech company. Help me lock my thesis.
+
+Here's what I know:
+- The learners I want to serve: <span class="var">[describe them — e.g., "working parents who want to switch into tech careers"]</span>
+- The problem I think they have: <span class="var">[describe it in their words — e.g., "they don't have time for a 6-month bootcamp"]</span>
+- What I think would help: <span class="var">[your rough idea — e.g., "30-minute daily AI tutoring sessions"]</span>
+
+Please:
+1. Rewrite my thesis as one clear sentence using this format: "We help [specific learner] go from [current state] to [desired state] by [your method]."
+2. Tell me 3 reasons this thesis might fail (be honest).
+3. Suggest 2 alternative theses I should consider.
+4. List 5 questions I should answer before moving on.</div>
+    </div>
+
+    <h4>What You'll Get Back</h4>
+    <div class="deliver-box">
+        <div class="label">From Your AI</div>
+        <ul>
+            <li>A one-sentence thesis you can put on your website</li>
+            <li>Honest reasons your idea might not work</li>
+            <li>2 backup directions if your first idea is weak</li>
+            <li>5 questions to think about before Step 2</li>
+        </ul>
+    </div>
+
+    <h4>Your Next Move</h4>
+    <div class="next-move">
+        <div class="label">→ Do This Now</div>
+        <div class="text">Save your final thesis sentence somewhere you'll see it daily. Then answer the 5 questions the AI gave you. <strong>Don't move to Step 2 until you can recite your thesis from memory.</strong></div>
+    </div>
+
+    <div class="callout">
+        <div class="label">If You're Stuck</div>
+        <p>If you can't pick a learner, ask yourself: <strong>"Who do I naturally help already?"</strong> The best EdTech founders start by serving people they already understand. You don't need to be an expert — you need to care.</p>
+    </div>
+</div>
+
+<!-- ============ STEP 2: VALIDATE YOUR MARKET ============ -->
+<div class="step-page">
+    <div class="step-meta">
+        <div class="left">
+            <div class="step-num">02</div>
+            <div>
+                <div class="label">Step Two</div>
+                <div class="name">Validate Your Market</div>
+            </div>
+        </div>
+        <div class="right">Week 3–4<br>~15 hours</div>
+    </div>
+
+    <div class="goal-box">
+        <div class="label">Your Goal</div>
+        <div class="text">Talk to 20 real people from your target group. Get at least 5 to say "I'd pay for this."</div>
+    </div>
+
+    <p>This is the step most founders skip — and it's the step that kills most startups. You need to know real people will pay real money before you build anything.</p>
+
+    <h4>What to Prepare (30 minutes)</h4>
+    <div class="prep-list">
+        <div class="label">Before You Start</div>
+        <ul>
+            <li>Write down your thesis sentence from Step 1</li>
+            <li>List 5 places your target learners hang out online (Facebook groups, Reddit, LinkedIn, Discord, etc.)</li>
+            <li>List 5 places they hang out offline (workplaces, schools, meetups)</li>
+            <li>Set up a free Calendly link for 20-minute chats</li>
+            <li>Prepare a simple Google Form for backup responses</li>
+        </ul>
+    </div>
+
+    <h4>Copy-Paste This Prompt — Part A</h4>
+    <div class="prompt-box">
+        <div class="header">
+            <div class="title">→ Build your interview script</div>
+            <div class="hint">Edit the [blue] parts</div>
+        </div>
+        <div class="body">Help me write a 20-minute customer interview script.
+
+My thesis: <span class="var">[paste your thesis sentence from Step 1]</span>
+My target learner: <span class="var">[describe them in detail]</span>
+
+I need a script that:
+1. Opens with a friendly 2-minute intro (no selling)
+2. Asks 8 questions to understand their CURRENT problem (not pitch my idea)
+3. Tests if they'd pay — without me asking "would you pay?"
+4. Ends with asking for 2 referrals to other people like them
+
+Make the questions sound natural and conversational, not like a survey. Include follow-up prompts for each question so I know what to dig into.</div>
+    </div>
+
+    <h4>Copy-Paste This Prompt — Part B (After Interviews)</h4>
+    <div class="prompt-box">
+        <div class="header">
+            <div class="title">→ After you've done 20 interviews</div>
+            <div class="hint">Use this to find patterns</div>
+        </div>
+        <div class="body">I just finished 20 customer interviews for my EdTech company.
+
+My thesis was: <span class="var">[paste thesis]</span>
+
+Here are my raw notes from the interviews:
+<span class="var">[paste all your interview notes — bullet points are fine]</span>
+
+Please:
+1. Tell me the top 3 patterns you see in what people actually want
+2. Tell me where my thesis was wrong (be brutal)
+3. Tell me how many of the 20 said they'd pay — and if that's enough to proceed
+4. Give me a revised thesis based on what I learned
+5. List 5 features my MVP MUST have based on what people said</div>
+    </div>
+
+    <h4>What You'll Get Back</h4>
+    <div class="deliver-box">
+        <div class="label">From Your AI</div>
+        <ul>
+            <li>A ready-to-use interview script</li>
+            <li>Patterns from your 20 interviews</li>
+            <li>A revised thesis based on real data</li>
+            <li>A clear list of must-have MVP features</li>
+        </ul>
+    </div>
+
+    <h4>Your Next Move</h4>
+    <div class="next-move">
+        <div class="label">→ Do This Now</div>
+        <div class="text">Book 20 interviews. Do them in 2 weeks. <strong>Don't build anything until 5+ people have said "I'd pay for this" — and given you a price they'd pay.</strong></div>
+    </div>
+
+    <div class="callout">
+        <div class="label">The Magic Question</div>
+        <p>During interviews, never ask "Would you pay $50?" Instead ask: <strong>"What did you last pay to solve this problem?"</strong> If they've never paid for anything in this space, they won't pay you either.</p>
+    </div>
+</div>
+
+<!-- ============ STEP 3: BUILD YOUR MVP ============ -->
+<div class="step-page">
+    <div class="step-meta">
+        <div class="left">
+            <div class="step-num">03</div>
+            <div>
+                <div class="label">Step Three</div>
+                <div class="name">Build Your MVP with AI</div>
+            </div>
+        </div>
+        <div class="right">Month 2–3<br>~60 hours</div>
+    </div>
+
+    <div class="goal-box">
+        <div class="label">Your Goal</div>
+        <div class="text">A working product you can charge money for. No coding required — your AI does the heavy lifting.</div>
+    </div>
+
+    <p>Your MVP (Minimum Viable Product) is the smallest version of your idea that solves the problem. It doesn't need to be fancy. It needs to <strong>work and accept payments.</strong></p>
+
+    <h4>What to Prepare (1 hour)</h4>
+    <div class="prep-list">
+        <div class="label">Before You Start</div>
+        <ul>
+            <li>Your revised thesis from Step 2</li>
+            <li>The 5 must-have features from Step 2</li>
+            <li>A name for your product (use a free name generator if stuck)</li>
+            <li>$20 for a domain name (Namecheap or Google Domains)</li>
+            <li>A Stripe account (free to set up)</li>
+            <li>A list of 3 "no-code" tools you're willing to try</li>
+        </ul>
+    </div>
+
+    <h4>Copy-Paste This Prompt — Part A (Plan It)</h4>
+    <div class="prompt-box">
+        <div class="header">
+            <div class="title">→ Plan your build</div>
+            <div class="hint">Edit the [blue] parts</div>
+        </div>
+        <div class="body">I need to build an MVP for my EdTech company. I'm not a developer and I don't want to hire one yet.
+
+My thesis: <span class="var">[paste thesis]</span>
+My 5 must-have features: <span class="var">[paste features from Step 2]</span>
+My budget: <span class="var">[$100 / $500 / $1000 — be honest]</span>
+My time: <span class="var">[e.g., "10 hours per week for 6 weeks"]</span>
+
+Please:
+1. Recommend the simplest no-code stack to build this (tools like Bubble, Glide, Softr, Airtable, Make, Zapier, etc.)
+2. Tell me exactly which tool does what
+3. Give me a week-by-week build plan for 6 weeks
+4. List the 3 things that will be hardest and how to handle each
+5. Tell me what to leave OUT of the MVP (so I don't over-build)</div>
+    </div>
+
+    <h4>Copy-Paste This Prompt — Part B (Build It)</h4>
+    <div class="prompt-box">
+        <div class="header">
+            <div class="title">→ Each build session</div>
+            <div class="hint">Repeat weekly</div>
+        </div>
+        <div class="body">I'm on week <span class="var">[1/2/3/4/5/6]</span> of building my EdTech MVP.
+
+My plan for this week is to: <span class="var">[paste what you planned to do this week]</span>
+
+I'm using these tools: <span class="var">[list tools]</span>
+
+So far I've done: <span class="var">[list what's done]</span>
+
+I'm stuck on: <span class="var">[describe the problem in plain English — even "I don't know how to start"]</span>
+
+Please:
+1. Give me step-by-step instructions to finish this week's tasks
+2. Use plain English — assume I've never used these tools before
+3. If I should use a specific button or menu, tell me exactly where to click
+4. If there's a video tutorial I should watch, tell me what to search for
+5. Give me ONE clear next action to take right now</div>
+    </div>
+
+    <h4>What You'll Get Back</h4>
+    <div class="deliver-box">
+        <div class="label">From Your AI</div>
+        <ul>
+            <li>A custom no-code stack recommendation</li>
+            <li>A 6-week build plan you can actually follow</li>
+            <li>Step-by-step weekly instructions</li>
+            <li>Plain-English help with specific tools</li>
+        </ul>
+    </div>
+
+    <h4>Your Next Move</h4>
+    <div class="next-move">
+        <div class="label">→ Do This Now</div>
+        <div class="text">Buy your domain today. Set up Stripe today. Pick your no-code tools today. <strong>Have a working URL you can send to a friend by end of Week 2.</strong> Ugly is fine. Broken links are not.</div>
+    </div>
+
+    <div class="callout">
+        <div class="label">The MVP Rule</div>
+        <p>If your MVP took more than 6 weeks to build, you built too much. Cut features until you can launch. <strong>You can always add later. You can't add to a product nobody uses.</strong></p>
+    </div>
+</div>
+
+<!-- ============ STEP 4: LAUNCH TO 100 PAYING USERS ============ -->
+<div class="step-page">
+    <div class="step-meta">
+        <div class="left">
+            <div class="step-num">04</div>
+            <div>
+                <div class="label">Step Four</div>
+                <div class="name">Launch to 100 Paying Users</div>
+            </div>
+        </div>
+        <div class="right">Month 4–6<br>~100 hours</div>
+    </div>
+
+    <div class="goal-box">
+        <div class="label">Your Goal</div>
+        <div class="text">Get your first 100 paying customers. That's roughly $5,000 in monthly revenue.</div>
+    </div>
+
+    <p>This is where the real work starts. Your MVP exists. Now you need people to use it — and pay for it. The good news: your first 100 users will teach you more than any course or book ever could.</p>
+
+    <h4>What to Prepare (2 hours)</h4>
+    <div class="prep-list">
+        <div class="label">Before You Start</div>
+        <ul>
+            <li>Your live MVP URL</li>
+            <li>A Stripe payment link working</li>
+            <li>The 20 people you interviewed in Step 2 (yes, go back to them)</li>
+            <li>A list of 10 communities where your learners hang out</li>
+            <li>A pricing decision: $X/month or $Y one-time</li>
+            <li>A short "founder story" you can post publicly</li>
+        </ul>
+    </div>
+
+    <h4>Copy-Paste This Prompt — Part A (Launch Plan)</h4>
+    <div class="prompt-box">
+        <div class="header">
+            <div class="title">→ Build your launch plan</div>
+            <div class="hint">Edit the [blue] parts</div>
+        </div>
+        <div class="body">My EdTech MVP is live. I need to get my first 100 paying customers in the next 90 days.
+
+My product: <span class="var">[describe it in 2 sentences]</span>
+My price: <span class="var">[$X/month or $Y one-time]</span>
+My target learner: <span class="var">[describe them]</span>
+Where they hang out: <span class="var">[list communities, social platforms, offline places]</span>
+My budget for marketing: <span class="var">[$0 / $500 / $2000]</span>
+My strengths: <span class="var">[e.g., "good at writing," "comfortable on video," "have a small Twitter following"]</span>
+
+Please:
+1. Give me a 90-day launch plan broken into 2-week sprints
+2. Tell me the 3 highest-impact channels for MY situation (not generic advice)
+3. Write me a "founder story" post I can use on social media (200 words)
+4. Give me 5 outreach messages I can send to my Step 2 interviewees
+5. Tell me what to do in Week 1, Week 2, etc. — be specific</div>
+    </div>
+
+    <h4>Copy-Paste This Prompt — Part B (Weekly Review)</h4>
+    <div class="prompt-box">
+        <div class="header">
+            <div class="title">→ Every Sunday night</div>
+            <div class="hint">Track what's working</div>
+        </div>
+        <div class="body">Here's my week in review for my EdTech launch:
+
+Users I had at start of week: <span class="var">[number]</span>
+Users I have now: <span class="var">[number]</span>
+New paying customers this week: <span class="var">[number]</span>
+Revenue this week: <span class="var">[$X]</span>
+
+What I tried this week:
+<span class="var">[list every marketing thing you did]</span>
+
+What worked:
+<span class="var">[list what brought in users]</span>
+
+What didn't work:
+<span class="var">[list what flopped]</span>
+
+My biggest insight:
+<span class="var">[one sentence]</span>
+
+Please:
+1. Tell me what to double down on next week
+2. Tell me what to stop doing
+3. Suggest ONE new experiment to try
+4. Tell me if I'm on track for 100 users in 90 days
+5. Give me my top 3 priorities for next week</div>
+    </div>
+
+    <h4>What You'll Get Back</h4>
+    <div class="deliver-box">
+        <div class="label">From Your AI</div>
+        <ul>
+            <li>A custom 90-day launch plan</li>
+            <li>A ready-to-post founder story</li>
+            <li>Outreach messages you can copy-paste</li>
+            <li>Weekly coaching based on your real numbers</li>
+        </ul>
+    </div>
+
+    <h4>Your Next Move</h4>
+    <div class="next-move">
+        <div class="label">→ Do This Now</div>
+        <div class="text">Email all 20 people from Step 2 today. <strong>Don't pitch. Just say "It's live — would love your honest feedback."</strong> Half won't reply. The other half will give you your first 10 customers.</div>
+    </div>
+
+    <div class="callout">
+        <div class="label">The Brutal Truth</div>
+        <p>Your first 100 users will come from <strong>conversations, not ads.</strong> If you're not talking to 5 new people every day, you're not launching — you're waiting. Get on calls. Send DMs. Show up in communities. Be a person, not a brand.</p>
+    </div>
+</div>
+
+<!-- ============ STEP 5: SCALE TO 10,000 USERS ============ -->
+<div class="step-page">
+    <div class="step-meta">
+        <div class="left">
+            <div class="step-num">05</div>
+            <div>
+                <div class="label">Step Five</div>
+                <div class="name">Scale to 10,000 Users</div>
+            </div>
+        </div>
+        <div class="right">Month 7–12<br>~600 hours</div>
+    </div>
+
+    <div class="goal-box">
+        <div class="label">Your Goal</div>
+        <div class="text">Grow from 100 to 10,000 users. Find channels that scale without your direct time.</div>
+    </div>
+
+    <p>100 users came from your sweat. 10,000 users comes from systems. You need repeatable channels that bring in users while you sleep — content, partnerships, paid ads, or community.</p>
+
+    <h4>What to Prepare (3 hours)</h4>
+    <div class="prep-list">
+        <div class="label">Before You Start</div>
+        <ul>
+            <li>Your first 100 users' data — how they found you</li>
+            <li>Which channel brought the BEST users (highest retention)</li>
+            <li>Your current monthly revenue and burn rate</li>
+            <li>3 pieces of content you've already made (any format)</li>
+            <li>A list of 20 potential partners in your space</li>
+            <li>3 months of runway (cash in bank)</li>
+        </ul>
+    </div>
+
+    <h4>Copy-Paste This Prompt</h4>
+    <div class="prompt-box">
+        <div class="header">
+            <div class="title">→ Build your scale plan</div>
+            <div class="hint">Edit the [blue] parts</div>
+        </div>
+        <div class="body">I have 100 paying users for my EdTech product. I want to scale to 10,000 users in the next 6 months.
+
+Current state:
+- Product: <span class="var">[describe]</span>
+- Monthly revenue: <span class="var">[$X]</span>
+- Monthly burn: <span class="var">[$Y]</span>
+- How my best users found me: <span class="var">[describe]</span>
+- My worst channel: <span class="var">[describe what flopped]</span>
+- My team: <span class="var">[just me / me + 1 contractor / me + co-founder]</span>
+- Cash in bank: <span class="var">[$X — 6 months of runway?]</span>
+
+Please:
+1. Pick the 2 channels I should go all-in on (based on what's working)
+2. Give me a 6-month plan with monthly milestones
+3. Tell me what to OUTSOURCE first (so I'm not the bottleneck)
+4. Build me a content calendar for the next 30 days (10 pieces of content)
+5. Tell me what partnerships to pursue and how to pitch them
+6. Tell me when I'm ready to start paid ads (and on what platform)
+7. Give me 5 metrics to track weekly that aren't vanity metrics</div>
+    </div>
+
+    <h4>What You'll Get Back</h4>
+    <div class="deliver-box">
+        <div class="label">From Your AI</div>
+        <ul>
+            <li>A focused scale plan on 2 channels (not 10)</li>
+            <li>Monthly milestones you can measure</li>
+            <li>A 30-day content calendar</li>
+            <li>Partnership pitch templates</li>
+            <li>The right metrics to track</li>
+        </ul>
+    </div>
+
+    <h4>Your Next Move</h4>
+    <div class="next-move">
+        <div class="label">→ Do This Now</div>
+        <div class="text">Pick ONE channel from the AI's recommendation. Commit to it for 90 days. <strong>Don't try 5 channels at once — that's how founders burn out without results.</strong> Focus wins. Spread loses.</div>
+    </div>
+
+    <div class="callout">
+        <div class="label">The Scaling Trap</div>
+        <p>Most founders try to scale too early. If your <strong>weekly active retention isn't above 60%</strong> at 100 users, scaling to 10,000 will just bring you 10,000 churned users. Fix retention first. Then pour fuel on the fire.</p>
+    </div>
+</div>
+
+<!-- ============ STEP 6: RAISE YOUR ROUND ============ -->
+<div class="step-page">
+    <div class="step-meta">
+        <div class="left">
+            <div class="step-num">06</div>
+            <div>
+                <div class="label">Step Six</div>
+                <div class="name">Raise Your Round</div>
+            </div>
+        </div>
+        <div class="right">Month 10–15<br>~200 hours</div>
+    </div>
+
+    <div class="goal-box">
+        <div class="label">Your Goal</div>
+        <div class="text">Raise $1M–$5M from investors to fuel your next phase of growth.</div>
+    </div>
+
+    <p>You don't <em>need</em> to raise money. But if you want to build a billion-dollar company, you probably will. This step shows you how to do it without giving away your company or your sanity.</p>
+
+    <h4>What to Prepare (1 week)</h4>
+    <div class="prep-list">
+        <div class="label">Before You Start</div>
+        <ul>
+            <li>12 months of clean financial data (revenue, churn, CAC, LTV)</li>
+            <li>A clear story: why now, why you, why this market</li>
+            <li>A list of 50 investors who invest in EdTech at your stage</li>
+            <li>Warm introductions to at least 10 of them (LinkedIn, advisors)</li>
+            <li>3 customers willing to take investor reference calls</li>
+            <li>A 10-slide pitch deck (your AI will help you write this)</li>
+        </ul>
+    </div>
+
+    <h4>Copy-Paste This Prompt</h4>
+    <div class="prompt-box">
+        <div class="header">
+            <div class="title">→ Build your raise kit</div>
+            <div class="hint">Edit the [blue] parts</div>
+        </div>
+        <div class="body">I'm raising a seed round for my EdTech company. Help me prepare.
+
+My numbers:
+- Monthly revenue: <span class="var">[$X]</span>
+- Monthly growth rate: <span class="var">[X%]</span>
+- Users: <span class="var">[X total, Y paying]</span>
+- Gross margin: <span class="var">[X%]</span>
+- CAC (cost to acquire a customer): <span class="var">[$X]</span>
+- LTV (lifetime value): <span class="var">[$X]</span>
+- Cash in bank: <span class="var">[$X]</span>
+- Runway left: <span class="var">[X months]</span>
+
+My story:
+- Why I started this: <span class="var">[2-3 sentences]</span>
+- Why I'm the right founder: <span class="var">[2-3 sentences]</span>
+- Why now: <span class="var">[2-3 sentences]</span>
+
+I want to raise: <span class="var">[$X]</span> at <span class="var">[$Y valuation cap or pre-money]</span>
+
+Please:
+1. Write me a 10-slide pitch deck outline (slide title + key points for each)
+2. Write a 100-word "teaser" I can send in cold emails to investors
+3. Give me 5 likely investor objections and how to handle each
+4. Tell me what documents I need to have ready before pitching
+5. Write me a follow-up email template for after a pitch meeting
+6. Tell me 3 red flags that mean I should NOT raise yet</div>
+    </div>
+
+    <h4>What You'll Get Back</h4>
+    <div class="deliver-box">
+        <div class="label">From Your AI</div>
+        <ul>
+            <li>A complete pitch deck outline</li>
+            <li>Cold email and follow-up templates</li>
+            <li>Objection-handling scripts</li>
+            <li>A readiness checklist</li>
+            <li>Honest signals on whether you're ready</li>
+        </ul>
+    </div>
+
+    <h4>Your Next Move</h4>
+    <div class="next-move">
+        <div class="label">→ Do This Now</div>
+        <div class="text">Don't pitch investors until you have 3 warm intros booked. <strong>Cold outreach to investors has a 1% reply rate. Warm intros have a 60% reply rate.</strong> Spend a week getting intros before you send a single pitch.</div>
+    </div>
+
+    <div class="callout">
+        <div class="label">The Honest Truth</div>
+        <p>If your monthly revenue is under $10K and growth is under 15% per month, you're not ready to raise a priced round. <strong>Consider a SAFE note or angel check instead.</strong> Don't waste 6 months pitching when you should be growing.</p>
+    </div>
+</div>
+
+<!-- ============ STEP 7: BUILD YOUR OPERATING SYSTEM ============ -->
+<div class="step-page">
+    <div class="step-meta">
+        <div class="left">
+            <div class="step-num">07</div>
+            <div>
+                <div class="label">Step Seven</div>
+                <div class="name">Build Your Operating System</div>
+            </div>
+        </div>
+        <div class="right">Month 13–24<br>Ongoing</div>
+    </div>
+
+    <div class="goal-box">
+        <div class="label">Your Goal</div>
+        <div class="text">Stop being the bottleneck. Build systems, hire your first team, and become a CEO — not a busy founder.</div>
+    </div>
+
+    <p>At 10,000 users, you can't do it all yourself anymore. This step is about replacing yourself with systems and people — so the company grows even when you take a week off.</p>
+
+    <h4>What to Prepare (2 hours)</h4>
+    <div class="prep-list">
+        <div class="label">Before You Start</div>
+        <ul>
+            <li>A list of everything YOU do in a week (time audit)</li>
+            <li>The 3 things only YOU can do (your zone of genius)</li>
+            <li>The 10 things anyone could do (your delegation list)</li>
+            <li>Your revenue and profit numbers</li>
+            <li>Budget for first 2 hires</li>
+        </ul>
+    </div>
+
+    <h4>Copy-Paste This Prompt</h4>
+    <div class="prompt-box">
+        <div class="header">
+            <div class="title">→ Build your operating system</div>
+            <div class="hint">Edit the [blue] parts</div>
+        </div>
+        <div class="body">I'm at 10,000 users and I need to build my operating system so I stop being the bottleneck.
+
+My time audit (what I do each week):
+<span class="var">[list everything — be honest, even "scrolling Twitter"]</span>
+
+Things only I can do:
+<span class="var">[list 2-3 things]</span>
+
+Things anyone could do:
+<span class="var">[list everything else]</span>
+
+My team:
+<span class="var">[just me / me + contractors / me + 1-2 FT hires]</span>
+
+My monthly revenue: <span class="var">[$X]</span>
+My monthly profit: <span class="var">[$Y]</span>
+Budget for hiring: <span class="var">[$Z/month]</span>
+
+Please:
+1. Tell me my first 2 hires (role + why)
+2. Write job descriptions for each (200 words each)
+3. Build me a weekly operating rhythm (what to do Mon, Tue, etc.)
+4. Tell me which AI tools to use to automate each delegated task
+5. Give me 5 KPIs I should track weekly as CEO (not operator)
+6. Tell me what to STOP doing immediately
+7. Write me a 90-day plan to transition from "doer" to "leader"</div>
+    </div>
+
+    <h4>What You'll Get Back</h4>
+    <div class="deliver-box">
+        <div class="label">From Your AI</div>
+        <ul>
+            <li>Your first 2 hires with job descriptions</li>
+            <li>A weekly operating rhythm</li>
+            <li>An automation roadmap</li>
+            <li>CEO-level KPIs to track</li>
+            <li>A 90-day transition plan</li>
+        </ul>
+    </div>
+
+    <h4>Your Next Move</h4>
+    <div class="next-move">
+        <div class="label">→ Do This Now</div>
+        <div class="text">Do a time audit THIS WEEK. Track every hour for 7 days. <strong>You can't delegate what you can't see.</strong> Most founders are shocked at how much time they spend on $15/hour work.</div>
+    </div>
+
+    <div class="callout">
+        <div class="label">The Identity Shift</div>
+        <p>This is the hardest step mentally. You built this company by doing everything. Now you have to <strong>let go of doing</strong> and start leading. The founders who can't make this shift stay stuck at $1M ARR forever. The ones who do become CEOs of billion-dollar companies.</p>
+    </div>
+</div>
+
+<!-- ============ MASTER PROMPT LIBRARY ============ -->
+<div class="page-break"></div>
+<div class="main-content">
+
+<div class="chapter-header">
+    <div class="chapter-tag">Quick Reference</div>
+    <h2 class="chapter-title">Master Prompt <span class="accent">Library</span></h2>
+    <p class="chapter-lede">All the prompts in one place. Bookmark this page. Come back to it whenever you're stuck.</p>
+</div>
+
+<h4>The "I'm Stuck" Universal Prompt</h4>
+<div class="prompt-box">
+    <div class="header">
+        <div class="title">→ Use this whenever you're stuck</div>
+        <div class="hint">Works for anything</div>
+    </div>
+    <div class="body">I'm working on my EdTech company and I'm stuck.
+
+Context: <span class="var">[where you are — e.g., "Step 4, week 2, trying to get first 10 paying users"]</span>
+What I'm trying to do: <span class="var">[one sentence]</span>
+What I've tried: <span class="var">[list]</span>
+What's happening instead: <span class="var">[describe]</span>
+How I'm feeling: <span class="var">[be honest — frustrated, overwhelmed, confused]</span>
+
+Please:
+1. Tell me what's actually going on (be honest, not nice)
+2. Give me 3 concrete things I can do in the next 24 hours
+3. Tell me if I'm overcomplicating this
+4. Give me ONE single next action</div>
+</div>
+
+<h4>The "Explain It Simply" Prompt</h4>
+<div class="prompt-box">
+    <div class="header">
+        <div class="title">→ When you don't understand something</div>
+        <div class="hint">No jargon allowed</div>
+    </div>
+    <div class="body">I don't understand: <span class="var">[concept — e.g., "CAC vs LTV," "SAFE notes," "churn rate"]</span>
+
+Please explain it to me like I'm 12 years old. Use a real-world example I'd actually understand (like running a lemonade stand or a video game). Then tell me why it matters for MY EdTech company specifically.</div>
+</div>
+
+<h4>The "Decision Help" Prompt</h4>
+<div class="prompt-box">
+    <div class="header">
+        <div class="title">→ When you can't decide</div>
+        <div class="hint">For tough calls</div>
+    </div>
+    <div class="body">I need to make a decision and I'm going back and forth.
+
+The decision: <span class="var">[describe it clearly]</span>
+Option A: <span class="var">[describe]</span>
+Option B: <span class="var">[describe]</span>
+
+Context:
+- My company is at: <span class="var">[stage]</span>
+- My gut says: <span class="var">[A or B]</span>
+- What's stopping me: <span class="var">[the fear or doubt]</span>
+
+Please:
+1. List the pros and cons of each option
+2. Tell me what a billion-dollar CEO would do
+3. Tell me what a scared founder would do
+4. Give me a clear recommendation and why
+5. Tell me what data would make this decision obvious</div>
+</div>
+
+<h4>The "Weekly Review" Prompt</h4>
+<div class="prompt-box">
+    <div class="header">
+        <div class="title">→ Every Sunday, 30 minutes</div>
+        <div class="hint">Make it a habit</div>
+    </div>
+    <div class="body">Time for my weekly review.
+
+This week I:
+<span class="var">[list everything you did — wins and losses]</span>
+
+My numbers:
+- Revenue: <span class="var">[$X]</span>
+- New users: <span class="var">[X]</span>
+- Churned users: <span class="var">[X]</span>
+- Hours worked: <span class="var">[X]</span>
+
+What drained my energy: <span class="var">[describe]</span>
+What gave me energy: <span class="var">[describe]</span>
+
+Please:
+1. Tell me what to do more of next week
+2. Tell me what to stop doing
+3. Tell me if my numbers are healthy for my stage
+4. Give me my top 3 priorities for next week
+5. Ask me one question I should think about</div>
+</div>
+
+</div>
+
+<!-- ============ WHAT TO PREPARE CHECKLIST ============ -->
+<div class="page-break"></div>
+<div class="main-content">
+
+<div class="chapter-header">
+    <div class="chapter-tag">Before You Begin</div>
+    <h2 class="chapter-title">Your Starter <span class="accent">Checklist</span></h2>
+    <p class="chapter-lede">Everything you need before starting Step 1. Check these off — you're more ready than you think.</p>
+</div>
+
+<h4>Tools & Accounts</h4>
+<div class="checklist">
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>AI chat tool.</strong> You're using one right now. That's all you need.</div>
+    </div>
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>Google account.</strong> For Docs, Sheets, Forms, Calendar. All free.</div>
+    </div>
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>Notes app.</strong> Apple Notes, Notion, or just a paper notebook.</div>
+    </div>
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>Calendly account.</strong> Free plan is fine. For booking customer chats.</div>
+    </div>
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>Stripe account.</strong> Free to set up. For taking payments in Step 3+.</div>
+    </div>
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>LinkedIn profile.</strong> Update it with what you're working on. Investors and customers will look.</div>
+    </div>
+</div>
+
+<h4>Knowledge & Mindset</h4>
+<div class="checklist">
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>Read the Blueprint.</strong> Even just the chapter titles and key callouts.</div>
+    </div>
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>Pick your learner.</strong> Even a rough idea. "People like me 5 years ago" is a fine start.</div>
+    </div>
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>Block 30 min/day.</strong> Same time every day. Make it a real calendar event.</div>
+    </div>
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>Tell one person.</strong> Accountability works. Tell a friend you're starting.</div>
+    </div>
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>Accept imperfection.</strong> Your first version will be ugly. That's the point.</div>
+    </div>
+</div>
+
+<h4>Money Prep</h4>
+<div class="checklist">
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>$100 starter fund.</strong> For a domain name and basic tools. That's it.</div>
+    </div>
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>6 months personal runway.</strong> Don't quit your day job yet. Build on nights and weekends.</div>
+    </div>
+    <div class="item">
+        <div class="box"></div>
+        <div class="text"><strong>Separate bank account.</strong> For business expenses. Don't mix with personal.</div>
+    </div>
+</div>
+
+<div class="callout">
+    <div class="label">The Real Checklist</div>
+    <p>Here's the truth: <strong>you're ready.</strong> You don't need more research. You don't need more courses. You don't need permission. You need to open the next page, copy the Step 1 prompt, paste it into your AI chat, and start. Everything else you'll figure out along the way.</p>
+</div>
+
+</div>
+
+<!-- ============ FAQ / TROUBLESHOOTING ============ -->
+<div class="page-break"></div>
+<div class="main-content">
+
+<div class="chapter-header">
+    <div class="chapter-tag">When Things Go Wrong</div>
+    <h2 class="chapter-title">Troubleshooting <span class="accent">& FAQ</span></h2>
+    <p class="chapter-lede">Real questions from real founders. If you're hitting a wall, the answer is probably here.</p>
+</div>
+
+<div class="faq-item">
+    <div class="q">Q: I don't have an idea yet. Can I still start?</div>
+    <div class="a"><strong>Yes.</strong> Use the Step 1 prompt but replace the [learner] and [problem] with "I don't know yet — help me discover them." The AI will guide you through a discovery process. Most founders start with a vague interest, not a fully-formed idea.</div>
+</div>
+
+<div class="faq-item">
+    <div class="q">Q: I tried a prompt and the AI gave me generic advice. What did I do wrong?</div>
+    <div class="a">You probably left the brackets blank or gave one-word answers. <strong>The quality of the AI's output depends on the quality of your input.</strong> Replace every [blue bracket] with 2-3 sentences of real detail. Vague in, vague out.</div>
+</div>
+
+<div class="faq-item">
+    <div class="q">Q: I'm not technical. Will I really be able to build an MVP?</div>
+    <div class="a"><strong>Yes.</strong> Modern no-code tools (Bubble, Glide, Softr, Make) let you build real products without code. Your AI assistant will give you step-by-step instructions. If you can use Excel and follow a recipe, you can build an MVP.</div>
+</div>
+
+<div class="faq-item">
+    <div class="q">Q: How do I know if my idea is any good?</div>
+    <div class="a">You don't — until Step 2. <strong>Talk to 20 real people.</strong> If 5+ say "I'd pay for this," your idea is good enough to build. If fewer than 5 say it, change something — either the learner, the problem, or the solution. The market tells you the truth.</div>
+</div>
+
+<div class="faq-item">
+    <div class="q">Q: I'm stuck on Step 4. I built the MVP but no one's buying. Help.</div>
+    <div class="a">Three likely causes: (1) <strong>You're not talking to enough people</strong> — aim for 5 new conversations a day. (2) <strong>Your price is wrong</strong> — try doubling it or halving it as an experiment. (3) <strong>Your MVP doesn't actually solve the problem</strong> — go back to your Step 2 interview notes and check.</div>
+</div>
+
+<div class="faq-item">
+    <div class="q">Q: Do I really need to raise money? Can't I just bootstrap?</div>
+    <div class="a">You can — and many billion-dollar companies are bootstrapped. <strong>Step 6 is optional.</strong> If you're profitable and growing, skip it. Only raise if you need fuel to grow faster than your profits allow. The Blueprint covers both paths.</div>
+</div>
+
+<div class="faq-item">
+    <div class="q">Q: I'm overwhelmed. There's too much to do.</div>
+    <div class="a">Use the "I'm Stuck" prompt from the Master Prompt Library. <strong>Then pick ONE thing</strong> — just one — and do it today. Momentum beats perfection. Most founders fail because they try to do 20 things at once instead of 1 thing well.</div>
+</div>
+
+<div class="faq-item">
+    <div class="q">Q: How long will this whole thing take?</div>
+    <div class="a">The blueprint is 24 months. <strong>But you'll see real progress in 90 days.</strong> By month 3, you'll have a live MVP. By month 6, paying customers. By month 12, real revenue. By month 24, a real company. The clock starts the day you run your first prompt.</div>
+</div>
+
+<div class="faq-item">
+    <div class="q">Q: What if I fail?</div>
+    <div class="a">Then you'll have learned more than 99% of people who never try. <strong>The skills you build in Steps 1-4 are worth more than the company itself.</strong> Most "failed" founders start their next company and succeed. The only real failure is never starting.</div>
+</div>
+
+<div class="callout" style="margin-top: 32px;">
+    <div class="label">Final Word</div>
+    <p>This guide is a recipe, not a rulebook. Use it as your north star — but adjust based on what your market tells you. <strong>The founders who win aren't the smartest. They're the ones who keep going when it gets hard.</strong> Open Step 1. Copy the prompt. Start now. We'll figure out the rest together.</p>
+</div>
+
+</div>
+
+</body>
+</html>
