@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String?
+  plan         String       @default("free") // free | pro
+  interviews   Interview[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Interview {
+  id           String         @id @default(cuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role         String
+  difficulty   String         @default("mid") // junior | mid | senior
+  mode         String         @default("text") // text | voice
+  status       String         @default("active") // active | completed | abandoned
+  startedAt    DateTime       @default(now())
+  completedAt  DateTime?
+  overallScore Int?
+  transcript   String         @default("[]") // JSON array of messages
+  feedback     String?        // JSON scorecard from AI
+  durationSec  Int?
+
+  @@index([userId])
+  @@index([status])
+}
