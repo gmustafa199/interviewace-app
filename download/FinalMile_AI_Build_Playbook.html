@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The FinalMile AI Build Playbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+@page {
+    size: 720px 1020px;
+    margin: 0;
+}
+:root {
+    --c-bg: #0a0a0f;
+    --c-surface: #14141c;
+    --c-surface-2: #1c1c28;
+    --c-text: #e8e6e3;
+    --c-text-dim: #9a9aa5;
+    --c-text-faint: #5c5c68;
+    --c-amber: #f5a524;
+    --c-indigo: #818cf8;
+    --c-green: #4ade80;
+    --c-line: #2a2a38;
+}
+* { box-sizing: border-box; }
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 720px;
+    background: var(--c-bg);
+    color: var(--c-text);
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+}
+@media screen {
+    html {
+        height: auto;
+        display: flex;
+        justify-content: center;
+        background: #222;
+    }
+    body {
+        transform-origin: top center;
+        margin: 20px auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+}
+
+/* ============ COVER ============ */
+.cover {
+    width: 720px;
+    height: 1020px;
+    box-sizing: border-box;
+    break-after: page;
+    overflow: hidden;
+    background: var(--c-bg);
+    position: relative;
+    padding: 70px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.cover::before {
+    content: "";
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 480px;
+    height: 480px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(245,165,36,0.22), transparent 65%);
+    z-index: 0;
+}
+.cover::after {
+    content: "";
+    position: absolute;
+    bottom: -180px;
+    left: -100px;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(129,140,248,0.18), transparent 65%);
+    z-index: 0;
+}
+.cover .top {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.cover .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--c-amber);
+    text-transform: uppercase;
+    border: 1px solid rgba(245,165,36,0.4);
+    padding: 6px 12px;
+    border-radius: 2px;
+}
+.cover .meta-top {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--c-text-faint);
+    text-align: right;
+    line-height: 1.6;
+}
+.cover .center {
+    position: relative;
+    z-index: 2;
+    margin-top: 60px;
+}
+.cover .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    color: var(--c-indigo);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+}
+.cover .title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 70px;
+    line-height: 0.96;
+    letter-spacing: -0.02em;
+    color: var(--c-text);
+    margin: 0 0 22px 0;
+}
+.cover .title .accent { color: var(--c-amber); font-style: italic; font-weight: 400; }
+.cover .subtitle {
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--c-text-dim);
+    max-width: 500px;
+    margin: 0;
+}
+.cover .rule {
+    width: 80px;
+    height: 2px;
+    background: var(--c-amber);
+    margin: 30px 0 22px 0;
+}
+.cover .pillars {
+    display: flex;
+    gap: 22px;
+    margin-top: 28px;
+}
+.cover .pillar {
+    flex: 1;
+    border-left: 2px solid var(--c-line);
+    padding-left: 14px;
+}
+.cover .pillar .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--c-text-faint);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.cover .pillar .value {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--c-text);
+    line-height: 1.15;
+}
+.cover .bottom {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--c-text-faint);
+    text-transform: uppercase;
+}
+
+/* ============ MAIN CONTENT ============ */
+.main-content {
+    padding: 56px 60px 40px 60px;
+}
+
+.chapter-header {
+    break-after: avoid;
+    break-inside: avoid;
+    margin-top: 26px;
+    margin-bottom: 18px;
+}
+.chapter-header:first-child { margin-top: 0; }
+.chapter-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--c-amber);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.chapter-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 34px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--c-text);
+    margin: 0 0 14px 0;
+}
+.chapter-divider {
+    width: 48px;
+    height: 2px;
+    background: var(--c-amber);
+    margin-bottom: 6px;
+}
+
+.body-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--c-text);
+    margin: 0 0 14px 0;
+    text-align: left;
+}
+.body-text .strong { font-weight: 700; color: var(--c-text); }
+.body-text .accent { color: var(--c-amber); font-weight: 600; }
+.body-text em { color: var(--c-indigo); font-style: italic; }
+
+.sub-head {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--c-text);
+    margin: 18px 0 8px 0;
+    letter-spacing: 0.01em;
+}
+
+/* Callout */
+.callout {
+    break-inside: avoid;
+    background: var(--c-surface);
+    border-left: 3px solid var(--c-amber);
+    padding: 18px 22px;
+    margin: 14px 0;
+    border-radius: 2px;
+}
+.callout .callout-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    color: var(--c-amber);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.callout .callout-body {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--c-text-dim);
+    margin: 0;
+}
+.callout .callout-body .strong { color: var(--c-text); font-weight: 700; }
+
+/* PROMPT BLOCK — the star of this document */
+.prompt-block {
+    break-inside: avoid;
+    background: var(--c-surface);
+    border: 1px solid var(--c-line);
+    border-left: 3px solid var(--c-indigo);
+    padding: 16px 20px;
+    margin: 14px 0;
+    border-radius: 2px;
+}
+.prompt-block .prompt-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--c-line);
+}
+.prompt-block .prompt-when {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--c-amber);
+    text-transform: uppercase;
+}
+.prompt-block .prompt-mode {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--c-indigo);
+    background: rgba(129,140,248,0.12);
+    padding: 3px 8px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.prompt-block .prompt-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--c-text);
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+.prompt-block .prompt-text .var {
+    color: var(--c-amber);
+}
+.prompt-block .prompt-output {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--c-line);
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px;
+    color: var(--c-text-dim);
+    line-height: 1.55;
+}
+.prompt-block .prompt-output .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--c-green);
+    text-transform: uppercase;
+    margin-right: 6px;
+}
+
+/* Stat block */
+.stat-block {
+    break-inside: avoid;
+    display: flex;
+    gap: 16px;
+    margin: 16px 0;
+}
+.stat {
+    flex: 1;
+    background: var(--c-surface);
+    padding: 16px 14px;
+    border-top: 2px solid var(--c-amber);
+    border-radius: 2px;
+}
+.stat .stat-value {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 28px;
+    color: var(--c-text);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+}
+.stat .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--c-text-faint);
+    text-transform: uppercase;
+    margin-top: 8px;
+    line-height: 1.4;
+}
+.stat .stat-detail {
+    font-size: 11px;
+    color: var(--c-text-dim);
+    margin-top: 4px;
+    line-height: 1.5;
+}
+
+/* Table */
+.table-wrap {
+    break-inside: avoid;
+    margin: 14px 0;
+    background: var(--c-surface);
+    border-radius: 2px;
+    overflow: hidden;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px;
+}
+table thead th {
+    background: var(--c-surface-2);
+    color: var(--c-amber);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 10px 11px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--c-line);
+}
+table tbody td {
+    padding: 9px 11px;
+    border-bottom: 1px solid var(--c-line);
+    color: var(--c-text-dim);
+    vertical-align: top;
+    line-height: 1.5;
+}
+table tbody tr:last-child td { border-bottom: none; }
+table tbody td.col-accent { color: var(--c-text); font-weight: 600; }
+table tbody td.col-amber { color: var(--c-amber); font-weight: 600; }
+table tbody td.col-green { color: var(--c-green); font-weight: 600; }
+
+/* Bullet list */
+.bullet-list {
+    margin: 10px 0 14px 0;
+    padding: 0;
+    list-style: none;
+}
+.bullet-list li {
+    position: relative;
+    padding-left: 22px;
+    margin-bottom: 8px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--c-text-dim);
+    break-inside: avoid;
+}
+.bullet-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 12px;
+    height: 2px;
+    background: var(--c-amber);
+}
+.bullet-list li .strong { color: var(--c-text); font-weight: 700; }
+
+/* Numbered list */
+.num-list {
+    margin: 10px 0 14px 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: num;
+}
+.num-list li {
+    counter-increment: num;
+    position: relative;
+    padding-left: 32px;
+    margin-bottom: 10px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--c-text-dim);
+    break-inside: avoid;
+}
+.num-list li::before {
+    content: counter(num, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--c-amber);
+    font-weight: 500;
+}
+.num-list li .strong { color: var(--c-text); font-weight: 700; }
+
+/* Phase card (used for week blocks) */
+.phase-card {
+    break-inside: avoid;
+    background: var(--c-surface);
+    border: 1px solid var(--c-line);
+    border-left: 3px solid var(--c-indigo);
+    padding: 16px 18px;
+    margin: 12px 0;
+    border-radius: 2px;
+}
+.phase-card .phase-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--c-indigo);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.phase-card .phase-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--c-text);
+    margin-bottom: 8px;
+}
+.phase-card .phase-body {
+    font-size: 12.5px;
+    color: var(--c-text-dim);
+    line-height: 1.65;
+    margin: 0;
+}
+.phase-card .phase-body .strong { color: var(--c-text); font-weight: 700; }
+
+/* Division of labor — two-column you-do / i-do */
+.labor-grid {
+    break-inside: avoid;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 14px 0;
+}
+.labor-card {
+    background: var(--c-surface);
+    padding: 14px 16px;
+    border-radius: 2px;
+    border-top: 2px solid;
+}
+.labor-card.you { border-top-color: var(--c-amber); }
+.labor-card.me { border-top-color: var(--c-indigo); }
+.labor-card .labor-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.labor-card.you .labor-label { color: var(--c-amber); }
+.labor-card.me .labor-label { color: var(--c-indigo); }
+.labor-card ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.labor-card li {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--c-text-dim);
+    padding: 4px 0 4px 14px;
+    position: relative;
+}
+.labor-card li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    top: 4px;
+    color: var(--c-text-faint);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Pull quote */
+.pull-quote {
+    break-inside: avoid;
+    margin: 16px 0;
+    padding: 16px 0 16px 22px;
+    border-left: 3px solid var(--c-indigo);
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 17px;
+    line-height: 1.45;
+    color: var(--c-text);
+}
+
+/* ============ ENDING ============ */
+.ending {
+    width: 720px;
+    height: 1020px;
+    box-sizing: border-box;
+    break-before: page;
+    overflow: hidden;
+    background: var(--c-bg);
+    position: relative;
+    padding: 70px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+.ending::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(245,165,36,0.15), transparent 65%);
+    z-index: 0;
+}
+.ending .end-mark {
+    position: relative;
+    z-index: 2;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--c-amber);
+    text-transform: uppercase;
+    margin-bottom: 36px;
+}
+.ending .end-quote {
+    position: relative;
+    z-index: 2;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 38px;
+    line-height: 1.25;
+    color: var(--c-text);
+    max-width: 540px;
+    margin: 0 0 32px 0;
+}
+.ending .end-rule {
+    position: relative;
+    z-index: 2;
+    width: 60px;
+    height: 2px;
+    background: var(--c-amber);
+    margin: 0 auto 26px auto;
+}
+.ending .end-meta {
+    position: relative;
+    z-index: 2;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--c-text-faint);
+    text-transform: uppercase;
+    line-height: 1.8;
+}
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+    <div class="top">
+        <div class="badge">Build Playbook · Vol. 02</div>
+        <div class="meta-top">
+            FinalMile AI<br>
+            20-Week Execution Plan
+        </div>
+    </div>
+
+    <div class="center">
+        <div class="eyebrow">The actual product we are building together</div>
+        <h1 class="title">Building <span class="accent">FinalMile</span> AI</h1>
+        <p class="subtitle">A voice-first AI mock interview coach for Indian job seekers — starting with IT freshers. Twenty weeks from zero to public launch, with every prompt you will need along the way.</p>
+        <div class="rule"></div>
+        <div class="pillars">
+            <div class="pillar">
+                <div class="label">Wedge</div>
+                <div class="value">IT fresher<br>interview prep</div>
+            </div>
+            <div class="pillar">
+                <div class="label">Pricing</div>
+                <div class="value">₹499/mo<br>₹2,999 pass</div>
+            </div>
+            <div class="pillar">
+                <div class="label">Timeline</div>
+                <div class="value">20 weeks<br>to launch</div>
+            </div>
+            <div class="pillar">
+                <div class="label">You / Me</div>
+                <div class="value">Content<br>Code</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom">
+        <div>Founder-Operator Edition</div>
+        <div>Build · Ship · Launch</div>
+    </div>
+</div>
+
+<!-- ============ MAIN CONTENT ============ -->
+<div class="main-content">
+
+<!-- ====== CHAPTER 1: COMMITMENT ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 01 · The Commitment</div>
+    <h2 class="chapter-title">What We Are Building Together</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">You asked for the real process, not the methodology. Here it is. We are building one specific product, from zero to public launch, over twenty weeks. I am committing to it as your senior full-stack engineer, your strategist, your operator, and your researcher. You are committing as the founder: the product owner, the customer voice, and the sole owner of content production. The previous document was the map; this document is the road.</p>
+
+<p class="body-text">The product is called <span class="strong">FinalMile AI</span> (working name — you can rename it anytime). It is a voice-first AI mock interview coach for Indian job seekers. The wedge — the narrow, painful, reachable entry point — is <span class="strong">final-year engineering students preparing for IT/software placement interviews</span>. India produces 1.5 million engineering graduates per year, and only 15 to 30 percent get placed through campus interviews. The interview is the single biggest source of fear, and the existing prep infrastructure (coaching classes, YouTube videos, generic question banks) does not solve the actual problem: students cannot practice answering questions out loud, under pressure, with realistic follow-ups, and get specific feedback on what they said wrong.</p>
+
+<p class="body-text">FinalMile AI solves this. A student opens the app, picks an interview type (TCS NQT, Infosys HackWithInfy, generic software developer HR round, Java technical round), puts on earphones, and has a fifteen-minute voice conversation with an AI interviewer that asks real questions, follows up based on their answers, and at the end produces a scorecard covering technical accuracy, communication clarity, confidence, and specific moments where they stumbled — with a recording of the session and recommended practice modules. The student can do this ten times a day for ₹499 per month, less than the cost of one hour with a human coach. That is the product. That is what we build.</p>
+
+<div class="callout">
+    <div class="callout-label">Why This Wedge, Why Now</div>
+    <div class="callout-body">Three forces converge: (1) voice AI crossed the realism threshold in 2024 — a GPT-4o voice conversation now feels 85% as real as a human interviewer, up from 30% two years ago. (2) India's placement season is brutal and annual — every July to November, 1.5M freshers face interviews they are underprepared for, creating a predictable, recurring demand spike. (3) No Indian AI-first voice interview product dominates yet; the field is YouTube videos, PDF question banks, and offline coaching. First mover with a great product wins this category.</div>
+</div>
+
+<!-- ====== CHAPTER 2: PRODUCT SPEC ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 02 · The Product Spec</div>
+    <h2 class="chapter-title">FinalMile AI in Detail</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">Before any code, we agree on the spec. The spec is the contract between us: every feature listed here will be built by week 20; anything not listed here is explicitly out of scope for v1. This discipline is what separates a real product from a feature factory. Read this chapter twice — once now, once before we start week 5.</p>
+
+<div class="sub-head">The Core Loop (what the user does every session)</div>
+<ol class="num-list">
+    <li><span class="strong">Pick interview type.</span> Choose from a curated list (TCS NQT technical, Infosys SP coding, generic SDE HR round, Java backend technical, Python developer technical, data analyst SQL round, etc.).</li>
+    <li><span class="strong">Brief context.</span> Optional 30-second voice intro: name, college, target company, experience level. AI uses this to personalize questions.</li>
+    <li><span class="strong">Conduct the interview.</span> 10–15 minute voice conversation. AI asks 5–8 questions adapted to the chosen type, follows up based on answers, mimics real interviewer behavior (silences, nudges, "can you elaborate on that").</li>
+    <li><span class="strong">Receive scorecard.</span> 30-second processing, then a full report: overall score, sub-scores (technical, communication, confidence, structure), 3 strengths, 3 weaknesses, verbatim quotes from the session with annotations.</li>
+    <li><span class="strong">Review recording.</span> Full audio playback with timestamps for each question and each weakness flag.</li>
+    <li><span class="strong">Practice recommendations.</span> 3 specific practice modules based on weaknesses (e.g., "Practice 5 SQL joins questions", "Rehearse the 'tell me about yourself' answer 3 times with this template").</li>
+</ol>
+
+<div class="sub-head">The Five Features v1 Must Ship</div>
+<ul class="bullet-list">
+    <li><span class="strong">Voice interview engine.</span> Real-time speech-to-text, GPT-4o for question generation and follow-ups, text-to-speech for AI voice. Latency under 2 seconds for natural conversation.</li>
+    <li><span class="strong">Interview type library.</span> 12 interview types at launch, each with its own question bank and scoring rubric (you produce the question banks; I build the system).</li>
+    <li><span class="strong">Scorecard engine.</span> Structured evaluation against per-interview-type rubrics, with quote-level annotations pulled from the transcript.</li>
+    <li><span class="strong">User dashboard.</span> History of past interviews, score trends, weak areas heatmap, streak counter.</li>
+    <li><span class="strong">Payment + access control.</span> ₹499/month or ₹2,999 placement season pass (August–December unlimited). Razorpay for India payments. Free tier: 1 interview per month.</li>
+</ul>
+
+<div class="sub-head">The Fifteen Features v1 Will NOT Ship</div>
+<p class="body-text">Equally important. Each of these will be requested by users in beta. Each will be tempting to add. Each will be deferred to v2 or later. Print this list and pin it above your desk.</p>
+<ul class="bullet-list">
+    <li>Live interviews with human coaches (marketplace feature, Phase 2)</li>
+    <li>Peer-to-peer mock interviews with other students (community feature, Phase 2)</li>
+    <li>Resume review or ATS optimization (separate product, never)</li>
+    <li>Linkedin profile optimization (never)</li>
+    <li>Coding environment inside the app (use existing platforms — LeetCode, HackerRank)</li>
+    <li>Video-based interviews (voice only for v1; video adds 10x complexity)</li>
+    <li>Multi-language interviews (English only for v1; add Hindi, Tamil, Telugu in v2)</li>
+    <li>Group discussions simulation (different product mechanics)</li>
+    <li>College-wise leaderboards (gamification trap, kills focus)</li>
+    <li>B2B college dashboard (Phase 3, after consumer traction)</li>
+    <li>Custom interview creation by user (Phase 2)</li>
+    <li>Integration with college placement portals (too slow, too fragmented)</li>
+    <li>Mobile native apps (responsive web app for v1; native apps in Phase 2)</li>
+    <li>Affiliate or referral program (Phase 2, after retention is proven)</li>
+    <li>AI-generated personalized study plans (Phase 2; v1 just recommends modules)</li>
+</ul>
+
+<!-- ====== CHAPTER 3: DIVISION OF LABOR ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 03 · Division of Labor</div>
+    <h2 class="chapter-title">What You Do, What I Do</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">This is the most important chapter for our working relationship. The biggest source of friction in any founder-AI collaboration is unclear ownership. We will not have that problem. Below is the explicit, non-overlapping division of labor. Your column is yours alone — I will not produce content even when I could, because your domain judgment on what a TCS NQT interviewer actually asks is something I cannot replicate. My column is mine alone — you will never write a line of code, manage a server, or touch infrastructure. When a task seems to span both columns, we will explicitly decide who owns it before starting.</p>
+
+<div class="labor-grid">
+    <div class="labor-card you">
+        <div class="labor-label">You Own · Content & Customer</div>
+        <ul>
+            <li>All interview question banks (per type, per role, per company)</li>
+            <li>All scoring rubrics (what makes a 9/10 vs 5/10 answer for each question type)</li>
+            <li>All sample "ideal" answers and exemplar transcripts</li>
+            <li>All practice module content (drills, flashcards, frameworks)</li>
+            <li>All landing page copy, email sequences, FAQ content</li>
+            <li>All user interview scripts and synthesis of findings</li>
+            <li>All social media content (LinkedIn posts, YouTube scripts, Twitter threads)</li>
+            <li>All customer support replies (you read every support ticket in v1)</li>
+            <li>All pricing decisions and discount codes</li>
+            <li>All partnership conversations with colleges, mentors, influencers</li>
+            <li>All hiring decisions (when we get there)</li>
+            <li>All fundraising conversations and pitch deck content</li>
+        </ul>
+    </div>
+    <div class="labor-card me">
+        <div class="labor-label">I Own · Code & Infrastructure</div>
+        <ul>
+            <li>All application code (Next.js, TypeScript, React components)</li>
+            <li>All database schema, migrations, and queries (Supabase/Postgres)</li>
+            <li>All API integrations (OpenAI, Razorpay, Resend, PostHog)</li>
+            <li>All voice pipeline (Whisper STT, GPT-4o conversation, TTS)</li>
+            <li>All deployment and hosting (Vercel, Supabase, edge functions)</li>
+            <li>All authentication and user management</li>
+            <li>All payment flows and subscription management</li>
+            <li>All analytics instrumentation and dashboards</li>
+            <li>All bug fixes, performance optimization, refactoring</li>
+            <li>All technical architecture decisions</li>
+            <li>All security, backup, and disaster recovery</li>
+            <li>All technical documentation and code comments</li>
+        </ul>
+    </div>
+</div>
+
+<div class="callout">
+    <div class="callout-label">The Boundary Rule</div>
+    <div class="callout-body">When in doubt, the rule is: <span class="strong">if it requires domain judgment about what an interviewer asks, what a good answer sounds like, or what a student fears — that is you.</span> If it requires writing code, debugging, or managing infrastructure — that is me. Strategy and product decisions are shared; we make them together in the Monday strategy sync.</div>
+</div>
+
+<!-- ====== CHAPTER 4: TECH STACK ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 04 · The Stack</div>
+    <h2 class="chapter-title">Concrete Technical Decisions</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">Below is the stack I will set up for you. You do not need to memorize this — you only need to know what each piece does at a high level so you can have informed conversations with future hires and investors. The principle behind every choice: <span class="strong">managed services over self-hosted, popular over niche, simple over clever</span>. Every tool below is something a future engineer can pick up in a week.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+    <th style="width:22%">Layer</th>
+    <th style="width:24%">Tool</th>
+    <th style="width:54%">Why This Choice</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+    <td class="col-accent">Web framework</td>
+    <td class="col-amber">Next.js 16 (App Router)</td>
+    <td>Industry standard, Vercel-native, AI SDK built-in, TypeScript-first. Your entire product lives here.</td>
+</tr>
+<tr>
+    <td class="col-accent">Language</td>
+    <td class="col-amber">TypeScript</td>
+    <td>Catches bugs at write-time, not run-time. I write it; you never see it.</td>
+</tr>
+<tr>
+    <td class="col-accent">Styling</td>
+    <td class="col-amber">Tailwind CSS + shadcn/ui</td>
+    <td>Utility-first, no separate CSS files to manage. shadcn gives us production-grade components (buttons, dialogs, tables) for free.</td>
+</tr>
+<tr>
+    <td class="col-accent">Database + Auth</td>
+    <td class="col-amber">Supabase (Postgres)</td>
+    <td>One vendor for database, authentication, file storage, and edge functions. Free tier covers the first 6 months easily.</td>
+</tr>
+<tr>
+    <td class="col-accent">Hosting</td>
+    <td class="col-amber">Vercel</td>
+    <td>One-click deploy from GitHub. Every code change is live in under 60 seconds. Free tier sufficient through beta.</td>
+</tr>
+<tr>
+    <td class="col-accent">AI — Conversation</td>
+    <td class="col-amber">OpenAI GPT-4o + Realtime API</td>
+    <td>Best voice conversation quality available. Realtime API enables sub-2-second latency for natural back-and-forth.</td>
+</tr>
+<tr>
+    <td class="col-accent">AI — Speech-to-text</td>
+    <td class="col-amber">OpenAI Whisper</td>
+    <td>Best accuracy on Indian English accents (critical for our user base).</td>
+</tr>
+<tr>
+    <td class="col-accent">AI — Text-to-speech</td>
+    <td class="col-amber">OpenAI TTS (or ElevenLabs)</td>
+    <td>Natural-sounding interviewer voice. ElevenLabs if we want multiple interviewer personas later.</td>
+</tr>
+<tr>
+    <td class="col-accent">Payments</td>
+    <td class="col-amber">Razorpay (India) + Stripe (global)</td>
+    <td>Razorpay is mandatory for UPI, RuPay, EMI — 80% of Indian payments. Stripe for NRI users and future global expansion.</td>
+</tr>
+<tr>
+    <td class="col-accent">Email</td>
+    <td class="col-amber">Resend</td>
+    <td>Transactional email (welcome, password reset, daily practice reminder). Free tier covers 3,000 emails/month.</td>
+</tr>
+<tr>
+    <td class="col-accent">Analytics</td>
+    <td class="col-amber">PostHog</td>
+    <td>Session replays, funnel tracking, feature flags, A/B testing. One tool replaces four.</td>
+</tr>
+<tr>
+    <td class="col-accent">Domain + DNS</td>
+    <td class="col-amber">Cloudflare</td>
+    <td>Free DNS, free SSL, free CDN. You buy the domain; I configure everything else.</td>
+</tr>
+<tr>
+    <td class="col-accent">Error monitoring</td>
+    <td class="col-amber">Sentry</td>
+    <td>I get an alert the moment any user hits a bug. Free tier covers v1.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout">
+    <div class="callout-label">Your Monthly Cost Ceiling</div>
+    <div class="callout-body">Through beta (first 100 users): under ₹3,000/month total. From launch to first 1,000 paying users: under ₹15,000/month. AI API costs scale with usage but stay under ₹40 per user per month at our pricing — that means 80%+ gross margin from day one. I will send you a weekly cost report so there are no surprises.</div>
+</div>
+
+<!-- ====== CHAPTER 5: 20-WEEK TIMELINE OVERVIEW ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 05 · The 20-Week Plan</div>
+    <h2 class="chapter-title">From Zero to Public Launch</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">Twenty weeks is the realistic timeline to a credible public launch with paying users. Not a perfect product — a real one, in the market, generating revenue, with retention data we can raise on. The plan is divided into four phases of five weeks each. Each phase has a single graduation metric; miss it and we do not advance, we iterate. This is not optional. Skipping phases to "go faster" is how founders ship broken products and lose six months fixing them.</p>
+
+<div class="phase-card">
+    <div class="phase-label">Phase A · Weeks 1–5 · Foundation</div>
+    <div class="phase-title">Wedge validation, brand, landing page, waitlist</div>
+    <div class="phase-body"><span class="strong">Goal:</span> 20 user interviews completed, positioning statement finalized, landing page live, 300+ waitlist signups. <span class="strong">Graduation:</span> 30+ signups/week organically, at least 5 signups who explicitly say "I would pay for this."</div>
+</div>
+
+<div class="phase-card">
+    <div class="phase-label">Phase B · Weeks 6–10 · Core Build</div>
+    <div class="phase-title">Voice interview engine, scoring, dashboard, auth, payment</div>
+    <div class="phase-body"><span class="strong">Goal:</span> End-to-end working product on staging. A user can sign up, pick an interview type, conduct a voice interview, receive a scorecard, and pay. <span class="strong">Graduation:</span> I can complete a full interview and receive a useful scorecard myself, with no errors.</div>
+</div>
+
+<div class="phase-card">
+    <div class="phase-label">Phase C · Weeks 11–15 · Content & Beta</div>
+    <div class="phase-title">You produce v1 question banks; we run private beta with 50 users</div>
+    <div class="phase-body"><span class="strong">Goal:</span> 12 interview types live with your question banks, 50 paying beta users, weekly iteration cycle. <span class="strong">Graduation:</span> 30%+ week-4 retention, 5+ organic referrals, NPS above 30.</div>
+</div>
+
+<div class="phase-card">
+    <div class="phase-label">Phase D · Weeks 16–20 · Public Launch</div>
+    <div class="phase-title">Polish, performance, launch sequence, first $1K MRR</div>
+    <div class="phase-body"><span class="strong">Goal:</span> Public launch on Product Hunt, Hacker News, Reddit, LinkedIn. First $1,000 MRR. <span class="strong">Graduation:</span> We have a real business. Then we plan Phase 5: months 6–12 growth.</div>
+</div>
+
+<div class="stat-block">
+    <div class="stat">
+        <div class="stat-value">20</div>
+        <div class="stat-label">Weeks to Launch</div>
+        <div class="stat-detail">5 phases × 5 weeks each</div>
+    </div>
+    <div class="stat">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Interview Types v1</div>
+        <div class="stat-detail">You author all question banks</div>
+    </div>
+    <div class="stat">
+        <div class="stat-value">50</div>
+        <div class="stat-label">Beta Users</div>
+        <div class="stat-detail">Paying, weekly feedback</div>
+    </div>
+    <div class="stat">
+        <div class="stat-value">$1K</div>
+        <div class="stat-label">MRR at Launch</div>
+        <div class="stat-detail">~150 paying users at ₹499/mo</div>
+    </div>
+</div>
+
+<!-- ====== CHAPTER 6: PHASE A — WEEKS 1-5 ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 06 · Phase A · Weeks 1–5</div>
+    <h2 class="chapter-title">Foundation — Validation, Brand, Waitlist</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">Phase A is the only phase where no product code is written. This is deliberate. The temptation to start building immediately is the single biggest killer of founder time — you ship something, nobody comes, you ship more, still nobody comes, six months evaporate. Phase A exists to prove, before any code, that 300 specific human beings want what we are about to build. If we cannot get 300 signups for a free waitlist, we cannot get 30 paying users for a real product. The discipline of Phase A is the discipline of earning the right to write code.</p>
+
+<p class="body-text">Below is the week-by-week breakdown, followed by the exact prompts you will use with me at each step. Copy each prompt verbatim into our chat at the start of the indicated week. I will respond with the artifact you need.</p>
+
+<div class="sub-head">Week 1 — Wedge Validation Interviews</div>
+<p class="body-text">Your task this week: identify 20 final-year engineering students or recent graduates (graduated in last 12 months) who sat for IT placement interviews. Reach out via your network, LinkedIn, college WhatsApp groups, juniors from your college. Conduct 30-minute interviews with each. Goal: understand what they feared, what they used to prepare, what surprised them, what they would pay to fix. I will draft the script; you conduct the conversations and send me raw notes.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 1 · Day 1 · Send this first</div>
+        <div class="prompt-mode">Strategist Mode</div>
+    </div>
+    <p class="prompt-text">Strategist mode. We are building FinalMile AI — a voice-first AI mock interview coach for Indian IT freshers. Before any code, I need to validate the wedge with 20 user interviews.
+
+Help me draft a 12-question interview script for final-year engineering students or recent graduates who sat for IT/software placement interviews in the last 12 months. Questions should uncover, in this order:
+1. Their placement experience (what companies, what rounds, what happened)
+2. What they feared most before the interview
+3. What they used to prepare (YouTube, coaching, books, friends, nothing)
+4. What surprised them about the actual interview
+5. What they would pay to fix, and how much
+6. Whether they would do a 15-min voice mock interview with an AI right now if it existed
+
+Format as a Google-Form-ready script I can paste into a doc. Keep questions open-ended. End with: "If I built this, would you be a beta user? Can I take your email?"
+
+Also: list 8 specific communities (Reddit subreddits, Telegram groups, LinkedIn search queries, college WhatsApp group types, Discord servers) where I can find these users fast.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> A ready-to-use interview script + a community target list with exact search queries and outreach message templates.</div>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 1 · Day 5 · After interviews</div>
+        <div class="prompt-mode">Researcher Mode</div>
+    </div>
+    <p class="prompt-text">Researcher mode. I have completed 20 user interviews. Here are my raw notes (pasting below):
+
+[PASTE YOUR RAW INTERVIEW NOTES HERE — bullet points are fine, no need to clean up]
+
+Synthesize these into:
+1. Top 5 patterns in what students fear most (with quotes)
+2. Top 5 tools they currently use to prepare (with frequency)
+3. Top 3 surprises from real interviews
+4. Pricing signals (what they said they would pay, in INR)
+5. A one-page positioning statement in this format: "For [user], who [pain], FinalMile AI is [category] that [outcome]. Unlike [incumbent], we [differentiator]."
+6. A list of the 5 most enthusiastic respondents (likely beta users) — name them by their first response identifier
+
+Be brutally honest. If the data does not support the wedge, tell me. If it suggests a pivot (e.g., focus only on HR round, or only on TCS NQT, or expand to banking), say so.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> A 2-page synthesis with a clear go/no-go on the wedge and 5 named beta candidates.</div>
+</div>
+
+<div class="sub-head">Week 2 — Competitive Teardown & Positioning Lock</div>
+<p class="body-text">Your task this week: research the top 5 competitors in the Indian interview prep space (InterviewBuddy, BodhiAI, Pramp, Final Round AI US, plus YouTube channels like Placement Season). Sign up for each (use free trials), go through the full flow, take screenshots. Send me the screenshots with notes on what's good and what's broken. Meanwhile, finalize our positioning statement from the Week 1 synthesis and lock it.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 2 · Day 2</div>
+        <div class="prompt-mode">Researcher Mode</div>
+    </div>
+    <p class="prompt-text">Researcher mode. I am competitive-tearing-down these 5 Indian interview prep products: InterviewBuddy, BodhiAI, Pramp, Final Round AI, Placement Season YouTube channel.
+
+For each, I need:
+1. Pricing (free tier, paid tier, B2B tier if any)
+2. Core feature set (what they actually do)
+3. Voice vs text vs video (which modality)
+4. India-specific or US/general
+5. Top 3 strengths (be generous — these are real businesses)
+6. Top 3 weaknesses or gaps (where they fall short)
+7. Their estimated user count / revenue if publicly known
+
+Then: based on this teardown and our positioning statement from Week 1, identify the 3 specific gaps in the market that FinalMile AI will exploit. Each gap should be a sentence a 5-year-old could understand.
+
+Format as a single table I can paste into our strategy doc.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> A 5-row competitive table + 3 sharp gap statements that become our differentiation pillars.</div>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 2 · Day 4</div>
+        <div class="prompt-mode">Strategist Mode</div>
+    </div>
+    <p class="prompt-text">Strategist mode. Based on the Week 1 user synthesis and the Week 2 competitive teardown, I need to lock 4 decisions before we build the landing page:
+
+1. **Exact wedge wording** — one sentence describing the user and the pain we solve
+2. **Pricing** — confirm: ₹499/month, ₹2,999 placement season pass (Aug-Dec unlimited), 1 free interview/month. Should we offer a ₹999/3-months mid-tier?
+3. **12 interview types** for v1 — propose the list, ranked by user demand from Week 1
+4. **Brand name options** — 5 candidates, with pros/cons of each, .com availability check notes
+
+For each decision, give me your recommendation with reasoning, plus 2 alternative options. I will make the final call.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> 4 locked decisions, ready to inform the landing page build.</div>
+</div>
+
+<div class="sub-head">Weeks 3–4 — Brand, Landing Page, Waitlist</div>
+<p class="body-text">Your task: register the domain (you choose from the 5 brand options), set up a Gmail account, create Twitter/LinkedIn/Instagram handles. Meanwhile, I will build the landing page based on the locked positioning. Goal by end of Week 4: landing page live at your domain, 300+ waitlist signups from organic outreach. This is also your first distribution test — if you cannot get 300 signups for free, you cannot get 30 paying users later.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 3 · Day 1 · Landing page build</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. Build the FinalMile AI landing page as a Next.js 16 single-page app. Set up the project from scratch with: TypeScript, Tailwind, shadcn/ui, Supabase client, Vercel deployment.
+
+Landing page sections (top to bottom):
+1. **Hero** — Headline: "[Locked wedge wording from Week 2]". Subhead: "Voice mock interviews with AI, personalized feedback, unlimited practice — for ₹499/month." CTA: "Join the waitlist" (email capture → Supabase `waitlist` table).
+2. **How it works** — 3 steps with icons: "Pick an interview type → Talk to AI for 15 minutes → Get your scorecard".
+3. **What you get** — 4 features in a grid: voice interview, scorecard, recording, practice recommendations.
+4. **12 interview types** — grid showing the 12 interview types we will support at launch.
+5. **Pricing** — 3 tiers (Free, ₹499/mo, ₹2,999 season pass).
+6. **Founder note** — short paragraph in your voice about why you are building this. I will write the copy.
+7. **FAQ** — 6 questions (when launching, will my data be private, which companies, refunds, group discounts, can I cancel anytime).
+8. **Final CTA** — email capture again.
+
+Design: dark theme (#0a0a0f background), amber accent (#f5a524), Inter font. Mobile-first responsive. Ship to Vercel staging URL.
+
+I will write all the copy and send it before you start. Tell me the exact copy blocks you need from me, in order.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> The exact copy blocks I need from you (Hero headline, subhead, founder note, 6 FAQ answers, etc.) — then the live landing page at a Vercel URL within 48 hours.</div>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 3 · Day 3 · After copy received</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. I have pasted the landing page copy below. Build the page with this copy, ship to Vercel staging, send me the URL.
+
+[COPY BLOCKS HERE]
+
+Then: set up Supabase project, create `waitlist` table (email, source, created_at, ip_address), wire the email capture form to insert into this table. On success, show a thank-you state with share buttons (WhatsApp, Twitter, LinkedIn). Send me the Supabase project URL and the staging URL.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Live landing page + working waitlist capture in Supabase. You can start driving traffic immediately.</div>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 4 · Day 1 · Outreach push</div>
+        <div class="prompt-mode">Operator Mode</div>
+    </div>
+    <p class="prompt-text">Operator mode. The landing page is live at [YOUR DOMAIN]. I need to drive 300 waitlist signups in 10 days through organic outreach only — no paid ads.
+
+Draft me 6 outreach artifacts:
+1. **LinkedIn post** (founder-voice, 200 words) — story of why I am building this, CTA to join waitlist
+2. **Twitter thread** (8 tweets) — "I talked to 20 engineering freshers about their placement interview fears. Here is what I learned →"
+3. **Reddit r/Indian_Academia post** (300 words) — value-first, no direct pitch until the last paragraph
+4. **Telegram outreach DM** (for college placement groups) — 80 words, casual, asking for 5 mins of their time + waitlist link
+5. **WhatsApp forward** (for college juniors) — 50 words, friendly, with link
+6. **College placement officer cold email** (B2B angle — offer free pilot for their students) — 150 words
+
+For each, give me the exact copy I can copy-paste. Include subject lines where relevant.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> 6 ready-to-send outreach artifacts calibrated for each platform's culture.</div>
+</div>
+
+<div class="sub-head">Week 5 — Waitlist Conversion & Phase A Graduation</div>
+<p class="body-text">Your task: push the outreach hard. Post the LinkedIn article, post the Twitter thread, send the Telegram DMs, forward the WhatsApp message to college groups. Track signups by source (we will use UTM links — I will set these up). Goal: 300 signups by end of week 5. Then assess graduation: did at least 5 of them explicitly say they would pay? Did signups come from at least 3 distinct sources? If yes, advance to Phase B. If no, iterate the positioning or pivot the wedge before writing code.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 5 · Day 5 · Phase A graduation check</div>
+        <div class="prompt-mode">Strategist Mode</div>
+    </div>
+    <p class="prompt-text">Strategist mode. End of Phase A. Here is my waitlist data:
+
+- Total signups: [NUMBER]
+- By source: [PASTE BREAKDOWN]
+- "Would pay" responses from interview outreach: [NUMBER]
+- Top 3 sources of signups: [LIST]
+- Sample of 10 signup emails: [PASTE]
+
+Audit this against the Phase A graduation criteria (300+ signups, 30+/week organic, 5+ "would pay"). Tell me:
+1. Did we graduate?
+2. If yes — what are the top 3 insights from the waitlist data that should inform Phase B build priorities?
+3. If no — what is the specific gap, and what is the recovery plan (more interviews, reposition, pivot)?
+4. Which 10 waitlist signups should I personally email to recruit as our first 10 alpha users in Phase C?
+
+Be direct. No encouragement if we missed.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> A clear go/no-go on Phase A, top 3 insights, and 10 named alpha user candidates.</div>
+</div>
+
+<!-- ====== CHAPTER 7: PHASE B — WEEKS 6-10 ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 07 · Phase B · Weeks 6–10</div>
+    <h2 class="chapter-title">Core Build — Voice Engine, Scoring, Payment</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">Phase B is where I work hardest and you work least. Your job in these five weeks is to (a) approve design decisions I bring you, (b) begin authoring the v1 question banks for the 12 interview types (your Week 11–15 deliverable, but start now), and (c) keep the waitlist warm with weekly emails. My job is to ship a working end-to-end product on staging by end of Week 10. The product does not need to be polished; it needs to work. A real user must be able to sign up, conduct a voice interview, receive a scorecard, and pay — all without errors.</p>
+
+<p class="body-text">The build is sequenced so that each week produces a verifiable artifact. We do not move to the next week's prompt until the previous week's artifact is shipped and tested. This sequencing is what prevents the "90% done forever" trap that kills most founder-engineer collaborations.</p>
+
+<div class="sub-head">Week 6 — Project Setup & Auth</div>
+<p class="body-text">Set up the production Next.js project, Supabase, Vercel, GitHub repo, environment variables, base design system. Implement email/password and Google OAuth authentication. By end of week: a user can sign up, log in, log out, and see a placeholder dashboard.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 6 · Day 1 · Project boot</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. Boot the FinalMile AI production app. Set up:
+1. Next.js 16 project with TypeScript, Tailwind, App Router — call it `finalmile-ai`
+2. Initialize git repo, push to GitHub (I will create the repo and add you)
+3. shadcn/ui installation with default theme
+4. Supabase project setup — I will create the project and give you the URL + anon key + service role key
+5. Vercel project linked to the GitHub repo
+6. Environment variables: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY (placeholder for now)
+7. Base layout: dark theme matching the landing page, sidebar nav (Dashboard, Interviews, History, Settings), top bar with user avatar + logout
+
+Then implement authentication:
+- Sign up page (email + password, Google OAuth)
+- Login page
+- Forgot password flow (Resend email)
+- Protected route wrapper — unauthenticated users redirect to /login
+- User session context via Supabase auth
+- After login, redirect to /dashboard
+
+Ship to Vercel. Send me: GitHub repo URL, Vercel URL, list of env vars I need to populate.
+
+I will create the Supabase project now and send you the keys.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Live Next.js app at a Vercel URL with working auth. You create the Supabase project and send me keys before this prompt.</div>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 6 · Day 4 · DB schema</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. Design and implement the v1 Supabase database schema. Tables needed:
+
+1. `profiles` (id uuid PK referencing auth.users, full_name text, college text, target_role text, experience_level text, created_at timestamptz, stripe_customer_id text)
+2. `interview_types` (id uuid PK, slug text unique, name text, description text, category text, question_count int, duration_minutes int, is_active bool, created_at timestamptz)
+3. `questions` (id uuid PK, interview_type_id uuid FK, question_text text, difficulty text, follow_up_strategy jsonb, scoring_rubric jsonb, created_at timestamptz) — note: question_text and rubric will be authored by me later
+4. `interviews` (id uuid PK, user_id uuid FK, interview_type_id uuid FK, status text, started_at timestamptz, ended_at timestamptz, duration_seconds int, audio_url text, transcript jsonb)
+5. `interview_scores` (id uuid PK, interview_id uuid FK, overall_score numeric, technical_score numeric, communication_score numeric, confidence_score numeric, structure_score numeric, strengths jsonb, weaknesses jsonb, quotes jsonb, recommendations jsonb, created_at timestamptz)
+6. `subscriptions` (id uuid PK, user_id uuid FK, plan text, status text, razorpay_subscription_id text, current_period_start timestamptz, current_period_end timestamptz, created_at timestamptz)
+7. `practice_modules` (id uuid PK, slug text, title text, description text, content jsonb, interview_type_id uuid FK, created_at timestamptz)
+
+Add Row Level Security policies: users can only read/update their own profiles, interviews, scores, subscriptions. interview_types, questions, practice_modules are readable by all authenticated users.
+
+Generate the SQL migration file, run it against Supabase, and document the schema in `/docs/schema.md` in the repo. Send me the migration file for review.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Live DB schema in Supabase + SQL migration file + schema documentation. Ready for app code to read/write.</div>
+</div>
+
+<div class="sub-head">Week 7 — Voice Interview Engine (the heart of the product)</div>
+<p class="body-text">This is the make-or-break week. If the voice interview feels robotic or has high latency, the product fails. We use OpenAI's Realtime API for low-latency conversation (sub-2-second round trips) and a custom system prompt that instructs the AI to behave like a real Indian IT interviewer. By end of week: you can click "Start Interview", talk to the AI for 10 minutes, and the conversation feels real.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 7 · Day 1 · Voice pipeline</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. Build the voice interview engine for FinalMile AI. This is the core feature. Requirements:
+
+1. Use OpenAI Realtime API (gpt-4o-realtime-preview) for low-latency voice conversation
+2. Client-side audio capture via Web Audio API + WebSocket streaming to OpenAI
+3. Server-side Next.js API route as the WebSocket proxy (to keep API key server-side)
+4. AI voice: use OpenAI TTS voice "alloy" or "echo" — pick the one that sounds most professional Indian-English
+5. System prompt for the AI interviewer (draft v1 below — I will refine):
+
+```
+You are an interviewer at a top Indian IT company conducting a placement interview for a final-year engineering student. You are professional but warm. You ask one question at a time, wait for the answer, and based on the answer either ask a follow-up to go deeper or move to the next topic. You do not give feedback during the interview — you are evaluating. After 10 minutes or 8 questions (whichever comes first), end the interview politely: "That's all from my side. HR will get back to you. All the best."
+
+Interview type: [TYPE FROM USER SELECTION]
+Target company context: [TCS / INFOSYS / WIPRO / GENERIC]
+Interviewer persona: friendly but rigorous.
+
+Behaviors:
+- If the student gives a 1-word answer, ask "Can you elaborate on that?"
+- If the student is stuck, give one hint, then move on
+- If the student rambles, gently interrupt: "Okay, let's move to the next question"
+- Track your question count silently
+- Vary question difficulty based on student performance (adaptive)
+
+Return your reasoning as a separate JSON field `interviewer_state` after each turn, hidden from the student, capturing: questions_asked_count, current_topic, student_confidence_estimate (1-10), notes_for_scorecard.
+```
+
+6. Build the UI: a "Live Interview" page with: avatar/animation for the AI interviewer, live transcript display (rolling), timer, "End interview" button, audio level indicator
+7. Save the full transcript + interviewer_state logs to the `interviews` table at end of session
+
+Ship to staging. I will test the voice flow myself end-to-end and send you feedback.
+
+Also tell me: what should the student see during the interview? Just the AI avatar? Live transcript? Both? Recommend a UX.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Working voice interview on staging. Plus my UX recommendation for what to show during the interview (then implement your approved version).</div>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 7 · Day 5 · After testing</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. I tested the voice interview. Feedback:
+
+[PASTE YOUR HONEST FEEDBACK — e.g., "AI was too chatty", "latency felt 3 seconds not 2", "didn't ask follow-ups", "voice sounded robotic on 'r' sounds", etc.]
+
+Fix these specific issues:
+1. [ISSUE 1]
+2. [ISSUE 2]
+3. [ISSUE 3]
+
+Also: implement the "pause detection" — if the student pauses for more than 4 seconds after a question, AI should gently prompt "Take your time, what's your thought process?" Once.
+
+Re-ship and tell me what to test.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Voice interview v2 with your fixes applied. This loop repeats until the interview feels real — expect 3-5 iterations this week.</div>
+</div>
+
+<div class="sub-head">Week 8 — Scorecard Engine</div>
+<p class="body-text">After the interview ends, the AI produces a structured scorecard. This is what the user is paying for. The scorecard must feel specific (referencing actual quotes from the session), honest (not everything is "great"), and actionable (clear next steps). By end of week: after an interview, the user sees a complete scorecard within 30 seconds.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 8 · Day 1 · Scorecard generation</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. Build the post-interview scorecard engine. After the voice interview ends:
+
+1. Send the full transcript + interviewer_state logs to GPT-4o (text mode this time, not realtime) with a scoring prompt
+2. Scoring prompt template (draft v1):
+```
+You are scoring a mock placement interview. Based on the transcript below, produce a scorecard in this exact JSON structure:
+{
+  "overall_score": 0-100,
+  "technical_score": 0-100,
+  "communication_score": 0-100,
+  "confidence_score": 0-100,
+  "structure_score": 0-100,  // how well-structured were the answers (STAR method, etc.)
+  "strengths": ["strength 1 with specific quote", "strength 2 with quote", "strength 3 with quote"],
+  "weaknesses": ["weakness 1 with specific quote and what should have been said", "weakness 2", "weakness 3"],
+  "quotes": [
+    {"quote": "verbatim from transcript", "annotation": "what was good/bad about this", "sentiment": "positive|negative|neutral"}
+  ],
+  "recommendations": [
+    {"module_slug": "sql-joins-practice", "reason": "struggled with joins question"},
+    {"module_slug": "tell-me-about-yourself", "reason": "rambled in self-intro"},
+    {"module_slug": "star-method", "reason": "answers lacked structure"}
+  ]
+}
+
+Transcript:
+[TRANSCRIPT]
+
+Interviewer notes:
+[INTERVIEWER_STATE]
+
+Be rigorous. An average student scores 50-60. A strong student scores 75-85. Scores above 90 are rare. Use exact quotes from the transcript — do not paraphrase.
+```
+
+3. Save the scorecard to `interview_scores` table linked to the interview
+4. Build the scorecard UI: hero score with sub-scores in a radar chart (use recharts), strengths and weaknesses in cards with quotes highlighted, recommendations as clickable cards
+5. Build the interview history page: list of past interviews with date, type, overall score, trend chart over time
+6. Build the recording playback page: audio player with timestamp markers for each weakness quote (click a weakness → audio jumps to that timestamp)
+
+Ship to staging. I will run 3 mock interviews of different quality (good, average, poor) and send you the scorecards for review.
+
+Recommend: should we show the scorecard immediately, or after a 5-second "analyzing..." animation? UX call.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Full scorecard system with audio playback. The 5-second analyzing animation is the right call — it makes the evaluation feel substantial.</div>
+</div>
+
+<div class="sub-head">Week 9 — Payment Integration (Razorpay)</div>
+<p class="body-text">Indian payments require Razorpay — UPI, RuPay, EMI, pay-later options. Stripe alone will lose 40% of potential customers. By end of week: a user can subscribe to ₹499/month or ₹2,999 season pass, payment goes through, access is granted, webhook updates the database.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 9 · Day 1 · Razorpay integration</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. Integrate Razorpay for subscriptions. Requirements:
+
+1. Create 2 Razorpay plans via API: ₹499/month recurring, ₹2,999 one-time for Aug-Dec season pass
+2. Subscription flow:
+   - User clicks "Upgrade" on dashboard
+   - Pricing modal shows 2 options
+   - User picks → Razorpay checkout opens (must support UPI Intent, cards, netbanking, wallets)
+   - On success, webhook fires → update `subscriptions` table → grant access
+   - On failure, show error and retry option
+3. Access control middleware: free tier = 1 interview/month (track in `interviews` table by counting current month's rows for user); paid tier = unlimited
+4. When free user hits limit, show paywall modal with CTA
+5. Handle subscription cancellation (Razorpay subscription cancelled → access continues till period end → then revoke)
+6. Handle failed recurring payment (3-day grace period with email reminder via Resend)
+7. Invoice generation — store invoice URLs in subscriptions table for user download
+
+Set up Razorpay test mode first. I will create the Razorpay account and send you key_id + key_secret for test mode. We will switch to live mode in Week 19 before public launch.
+
+Ship to staging. I will run through both subscription flows in test mode and verify the access control works.
+
+Tell me what Razorpay webhook events I need to configure in the dashboard.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Working subscription flow in test mode + the list of webhook events you need to configure in Razorpay dashboard.</div>
+</div>
+
+<div class="sub-head">Week 10 — Phase B Integration & Graduation</div>
+<p class="body-text">Wire everything together. Run end-to-end test scenarios. Fix the top 10 bugs. By end of week: the full product works on staging with no errors. You (the founder) can complete the entire flow — sign up, conduct interview, see scorecard, pay, see history — without hitting any blocker.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 10 · Day 1 · E2E test scenarios</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. End-to-end integration week. Run these 8 test scenarios and report pass/fail for each:
+
+1. New user signup (email/password) → onboarding → first free interview → scorecard
+2. New user signup (Google OAuth) → onboarding → first free interview → scorecard
+3. Free user hits monthly limit → paywall → subscribe ₹499 → unlimited access
+4. Free user hits monthly limit → paywall → subscribe ₹2,999 season pass → unlimited access till Dec 31
+5. Paid user cancels subscription → access continues till period end → revokes
+6. User conducts 5 interviews → views history → score trend chart renders → clicks a past interview → audio playback works
+7. User updates profile → changes target role → next interview uses new role
+8. Password reset flow end-to-end
+
+For any failures, fix immediately. Then set up Sentry error monitoring and PostHog session replays on staging. Run a Lighthouse audit and fix any score below 80.
+
+Finally, draft a 1-page "Phase B graduation report" listing: what's shipped, what's known-broken (if anything), what's deferred to v2, and a go/no-go recommendation for Phase C beta.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> All 8 scenarios passing + monitoring installed + Phase B graduation report with go/no-go.</div>
+</div>
+
+<!-- ====== CHAPTER 8: PHASE C — WEEKS 11-15 ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 08 · Phase C · Weeks 11–15</div>
+    <h2 class="chapter-title">Content &amp; Private Beta — You Produce, We Iterate</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">Phase C is your heaviest lift. The voice engine works. The scorecard works. Payment works. What's missing is <span class="strong">content</span> — the question banks, scoring rubrics, and practice modules that make interviews feel real and feedback feel specific. This is your domain. You produce it; I integrate it. In parallel, we run a private beta with 50 paying users recruited from the waitlist. Every week of beta produces a list of fixes; I ship them, you produce more content. By end of Week 15: 12 interview types live with full question banks, 50 paying beta users, weekly iteration cycle running.</p>
+
+<div class="sub-head">Your Content Production Plan — The 12 Interview Types</div>
+<p class="body-text">For each interview type, you produce: (1) 40–60 questions organized by sub-topic and difficulty, (2) a scoring rubric per question type, (3) 3 sample "ideal" answers per question with annotations, (4) one practice module per common weakness. Format will be JSON or CSV — I will provide the schema. Total content volume: ~600 questions, ~150 sample answers, ~30 practice modules. Comparable to your 21K UPSC questions but smaller and more structured. Plan: 2 interview types per week, 6 weeks of production. Start in Week 9 (overlap with Phase B); finish by Week 14.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+    <th style="width:8%">Wk</th>
+    <th style="width:36%">Interview Types to Author</th>
+    <th style="width:56%">Content Deliverables</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+    <td class="col-amber">9</td>
+    <td class="col-accent">1. TCS NQT Technical · 2. Infosys SP Coding</td>
+    <td>50 Qs each + rubrics + 3 sample answers/Q + 2 practice modules each</td>
+</tr>
+<tr>
+    <td class="col-amber">10</td>
+    <td class="col-accent">3. Generic SDE HR Round · 4. Wipro Technical</td>
+    <td>Same deliverable structure as Week 9</td>
+</tr>
+<tr>
+    <td class="col-amber">11</td>
+    <td class="col-accent">5. Java Backend Technical · 6. Python Developer Technical</td>
+    <td>Same deliverable structure</td>
+</tr>
+<tr>
+    <td class="col-amber">12</td>
+    <td class="col-accent">7. Data Analyst SQL Round · 8. Frontend React Developer</td>
+    <td>Same deliverable structure</td>
+</tr>
+<tr>
+    <td class="col-amber">13</td>
+    <td class="col-accent">9. Full-Stack Developer · 10. DevOps Engineer</td>
+    <td>Same deliverable structure</td>
+</tr>
+<tr>
+    <td class="col-amber">14</td>
+    <td class="col-accent">11. Aptitude &amp; Logical Reasoning · 12. Behavioral / STAR</td>
+    <td>Same deliverable structure</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 9 · Day 1 · Content schema setup</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. I'm ready to start authoring question banks. Give me the exact JSON schema for:
+
+1. A `question` row (one interview question with its follow-up strategy and scoring rubric)
+2. A `practice_module` row (one practice module with content)
+3. A `sample_answer` row (one ideal answer with annotations)
+
+For each, give me:
+- The exact JSON structure (field names, types, allowed values)
+- A worked example I can use as a template
+- A CSV template I can paste into Google Sheets and bulk-edit
+- A bulk-import endpoint I can hit to load my content into Supabase
+
+Recommend: should I author in JSON directly, or in Google Sheets and export CSV? Tell me the most efficient workflow given I'll produce 600+ questions.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> JSON schemas, worked examples, CSV templates, and a bulk-import API. Recommendation: author in Google Sheets, export CSV, run a bulk-import script I'll write for you.</div>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 11 · Day 1 · First content load</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. I have authored the first 4 interview types (TCS NQT, Infosys SP, SDE HR, Wipro Tech) in this CSV:
+
+[PASTE CSV CONTENT OR UPLOAD FILE]
+
+Validate the CSV against the schema. Run the bulk import. Wire the questions into the interview engine so when a user picks "TCS NQT Technical", the AI pulls from this question bank.
+
+Then: build me an admin page at /admin (password-protected via Supabase auth + a `is_admin` flag on my profile) where I can:
+- See all interview types and their question counts
+- Add/edit/delete questions inline
+- Preview a question's follow-up strategy
+- Mark questions as "needs review"
+
+Ship and tell me the URL.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Your content live in the product + an admin page for ongoing content management.</div>
+</div>
+
+<div class="sub-head">Weeks 11–15 — Private Beta with 50 Paying Users</div>
+<p class="body-text">In parallel with content production, we run the private beta. From the waitlist, you recruit 50 users who agree to pay ₹199/month (60% launch discount) for the beta period. They get a Slack/Discord channel with you for direct feedback. Every Monday, you summarize the prior week's feedback and send it to me; I prioritize the top 5 fixes and ship them by Friday. This weekly loop is the heart of Phase C — it's how a real product gets shaped by real users.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 11 · Day 1 · Beta recruitment</div>
+        <div class="prompt-mode">Operator Mode</div>
+    </div>
+    <p class="prompt-text">Operator mode. I need to recruit 50 paying beta users from my 300+ waitlist. Draft me:
+
+1. A personalized email to the top 30 waitlist signups (use the 10 you identified in Week 5 + 20 more), offering:
+   - 60% off launch price (₹199/month) for the 5-week beta
+   - Direct Slack access to me (the founder)
+   - Their feedback shapes the product
+   - Founding member badge on their profile
+   - Locked-in ₹299/month price for life when we launch at ₹499
+
+2. A Slack/Discord invite message that sets the tone: "This is a working beta. I read every message. You're shaping this product."
+
+3. A weekly feedback template I'll send every Friday asking: "Top 1 thing you loved, top 1 thing that frustrated you, top 1 feature you wish existed, would you refer a friend (Y/N)?"
+
+4. A beta agreement / terms of service short doc covering: refund policy, data privacy, expectation setting (this is beta, things will break).
+
+Send me all 4 as copy-paste-ready text.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> 4 ready-to-send artifacts that get beta recruits signed and engaged.</div>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Weeks 12–15 · Every Monday · Weekly iteration</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. Weekly beta iteration. Here is the synthesized beta feedback from last week (pasting below):
+
+[PASTE WEEKLY FEEDBACK SUMMARY]
+
+Top 5 fixes prioritized by impact:
+1. [ISSUE 1 — most critical, usually a blocker]
+2. [ISSUE 2]
+3. [ISSUE 3]
+4. [ISSUE 4]
+5. [ISSUE 5]
+
+For each:
+- Fix it on staging
+- Verify with a test scenario
+- Deploy to production
+- Reply with what was fixed, what couldn't be fixed (and why), and any new issues discovered
+
+Also: pull the PostHog data for last week — top 3 drop-off points in the funnel, top 3 rage-clicked elements, average session length, % of beta users who conducted ≥3 interviews. Send me a 1-paragraph weekly metrics summary.
+
+If any metric dropped >20% week-over-week, flag it as RED and propose a fix.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> 5 fixes shipped + weekly metrics summary. This loop repeats every Monday for 4 weeks.</div>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 15 · Day 5 · Phase C graduation check</div>
+        <div class="prompt-mode">Strategist Mode</div>
+    </div>
+    <p class="prompt-text">Strategist mode. End of Phase C. Here is my beta data:
+
+- Total paying beta users: [NUMBER]
+- Average interviews per user per week: [NUMBER]
+- Week-4 retention (% of beta users still active in week 4): [%]
+- NPS from last week's survey: [NUMBER]
+- Organic referrals (friends signed up without me asking): [NUMBER]
+- Top 3 most-used interview types: [LIST]
+- Top 3 biggest complaints: [LIST]
+- Revenue collected during beta: ₹[AMOUNT]
+- Content authored: [NUMBER] questions across [NUMBER] interview types
+
+Audit against Phase C graduation criteria (30%+ W4 retention, 5+ organic referrals, NPS 30+). Tell me:
+1. Did we graduate?
+2. If yes — what are the top 3 launch-blocking issues to fix in Phase D?
+3. If no — what is the specific gap, and what's the iteration plan?
+4. Should we expand the wedge (add interview types) or narrow it (cut underperforming types) for public launch?
+5. Realistic MRR projection for 60 days post-launch based on this data.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Clear go/no-go + 3 launch-blocking fixes + wedge recommendation + MRR projection.</div>
+</div>
+
+<!-- ====== CHAPTER 9: PHASE D — WEEKS 16-20 ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 09 · Phase D · Weeks 16–20</div>
+    <h2 class="chapter-title">Public Launch — Polish, Performance, ₹1K MRR</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">Phase D takes everything we built and validated in private beta and prepares it for public market. The goal is no longer validation — it is scale. We polish the UX, fix performance, switch payments to live mode, execute a multi-platform launch sequence, and reach first $1,000 MRR (~150 paying users at ₹499/month). This is also the phase where we close the pre-seed round ($500K–$1.5M) on the strength of beta data, public launch traction, and the waitlist conversion. The work is intense but short — five weeks of focused execution.</p>
+
+<div class="sub-head">Weeks 16–17 — Polish &amp; Performance</div>
+<p class="body-text">Two weeks of UX polish, performance optimization, and bug-fixing. The bar: every beta user who has not churned must say "this feels ready" when shown the polished version. Voice latency must drop below 2 seconds consistently. Mobile experience must be flawless (60%+ of users will be on phones). Lighthouse score 90+. These weeks are about removing every excuse a user might have to not pay.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 16 · Day 1 · Polish sprint</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. Two-week polish sprint before public launch. Fix these specific issues from beta feedback:
+
+1. [PASTE TOP 10 POLISH ISSUES FROM BETA]
+
+Also:
+- Optimize voice pipeline: target <2 second latency (currently ~2.8s). Profile where the latency is and fix the top 3 contributors.
+- Mobile UX audit: every page must work on a 360px wide screen. Test on real Android devices via BrowserStack.
+- Lighthouse audit on home, dashboard, interview, scorecard, history pages — fix anything below 90.
+- Add skeleton loaders on all async states.
+- Add proper error boundaries with friendly error messages.
+- Set up Sentry release tracking so I can see which deploy introduced which bug.
+
+Week 1: fix all 10 polish issues + voice latency optimization.
+Week 2: mobile UX + Lighthouse + error states.
+
+Ship daily to staging. I'll test end-to-end every Friday.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> A polished product with measurably better latency, mobile UX, and error handling.</div>
+</div>
+
+<div class="sub-head">Weeks 18–19 — Payments Live &amp; Pre-Launch Checklist</div>
+<p class="body-text">Switch Razorpay from test to live mode. Finalize pricing tiers, refund policy, terms of service, privacy policy. Set up customer support inbox (you@yourdomain.com via Resend or a Freshdesk free tier). Build a referral system (each user gets a unique link; referred friend gets 1 month free; referrer gets 1 month free when friend pays). Set up the public launch sequence calendar with specific posts on specific platforms on specific days.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 18 · Day 1 · Go-live prep</div>
+        <div class="prompt-mode">Engineer Mode</div>
+    </div>
+    <p class="prompt-text">Engineer mode. Pre-launch go-live checklist. Execute these tasks in order:
+
+1. Switch Razorpay from test mode to live mode. Update env vars. Run a ₹1 test transaction end-to-end, then refund it.
+2. Generate and deploy: /privacy (privacy policy — I will paste copy), /terms (terms of service — I will paste copy), /refund-policy, /contact
+3. Set up Resend with my domain (I'll add the DNS records you specify). Configure: welcome email, payment receipt email, daily practice reminder (cron at 9am IST), failed payment email.
+4. Build referral system: each user gets a unique `?ref=USERCODE` link. When a new user signs up via that link, store `referred_by` on their profile. When the referred user makes their first payment, both users get 1 month free added to their subscription.
+5. Set up PostHog funnels: signup → first interview → scorecard view → payment. I want to see conversion at each step.
+6. Set up Vercel Analytics for public-facing traffic source tracking.
+7. Final production deploy. Smoke test the 8 scenarios from Week 10 on production.
+
+Send me: live URL, list of DNS records I need to add, the 8-scenario smoke test results.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Production-ready app at your domain + DNS records to add + smoke test pass/fail report.</div>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 19 · Day 1 · Launch sequence planning</div>
+        <div class="prompt-mode">Operator Mode</div>
+    </div>
+    <p class="prompt-text">Operator mode. Public launch is in Week 20. Draft me a 7-day launch sequence with specific copy for each day:
+
+Day 1 (Monday): Product Hunt launch
+- Maker comment (250 words, founder voice)
+- 60-second demo video script
+- List of 25 supporters to notify 1 hour before launch
+- 3 image assets needed (I'll generate)
+
+Day 2 (Tuesday): Hacker News "Show HN" post
+- Title (80 chars max)
+- Body (300 words, technical-leaning)
+- Best time to post (with rationale)
+
+Day 3 (Wednesday): LinkedIn founder post
+- 400 words, story-driven
+- "I built this because..." structure
+- 5 people to tag who will amplify
+
+Day 4 (Thursday): Twitter thread
+- 10 tweets
+- "What I learned building an AI interview coach for Indian freshers"
+- Embed link to product
+
+Day 5 (Friday): Reddit r/Indian_Academia + r/india + r/cscareerquestions
+- 3 different posts calibrated to each subreddit's culture
+- Value-first, no direct pitch until last paragraph
+
+Day 6 (Saturday): YouTube shorts
+- 3 short scripts (60 seconds each)
+- "Watch me crush a TCS NQT interview with AI"
+
+Day 7 (Sunday): WhatsApp/Telegram push
+- Final beta users → ask for testimonials and reviews
+- College groups → "FinalMile AI is live, first 100 users get 50% off"
+
+For each, give me the exact copy I can copy-paste. Include subject lines, hashtags, and optimal posting times in IST.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> A complete 7-day launch playbook with copy for every platform, ready to execute.</div>
+</div>
+
+<div class="sub-head">Week 20 — Launch Week &amp; First $1K MRR</div>
+<p class="body-text">Execute the 7-day launch sequence. You post; I monitor. Every day during launch week, we sync for 30 minutes on metrics: signups, activations, payments, top support issues, top bugs. I ship hotfixes within 4 hours. The goal is ₹50,000 MRR (~100 paying users) by end of Week 20 — that's $1,000 MRR roughly. Stretch goal: ₹1,00,000 MRR. The launch is not the end — it's the start of Phase 5, the growth phase that takes us from $1K to $50K MRR over the following 12 months.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 20 · Daily · Launch week standup</div>
+        <div class="prompt-mode">Strategist Mode</div>
+    </div>
+    <p class="prompt-text">Strategist mode. Launch day [N of 7] standup. Here are yesterday's metrics:
+
+- Signups: [NUMBER]
+- Activations (first interview completed): [NUMBER]
+- Payments: [NUMBER] × ₹[AMOUNT] = ₹[TOTAL]
+- Top 3 support issues: [LIST]
+- Top bugs reported: [LIST]
+- Conversion rate (signup → payment): [%]
+- PostHog funnel drop-off points: [LIST]
+
+Tell me:
+1. Are we on track for ₹50,000 MRR by Day 7? If not, what's the gap?
+2. What's the #1 thing I should do today to move the needle?
+3. Any bugs I should fix immediately? (I'll pass to engineer mode)
+4. What channel is performing best? Should we double-down?
+5. One piece of encouragement or one piece of warning, whichever is more honest.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Daily standup analysis with one clear priority for the day. This loop runs every day for 7 days.</div>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Week 20 · Day 7 · Launch retrospective</div>
+        <div class="prompt-mode">Strategist Mode</div>
+    </div>
+    <p class="prompt-text">Strategist mode. Launch week complete. Final metrics:
+
+- Total signups in 7 days: [NUMBER]
+- Total paying users: [NUMBER]
+- MRR: ₹[AMOUNT]
+- Conversion rate (signup → paid): [%]
+- Week-1 retention (signed up Day 1-3, active Day 7): [%]
+- Top-performing channel: [CHANNEL]
+- Worst-performing channel: [CHANNEL]
+- Net new waitlist (for next batch): [NUMBER]
+- Customer support tickets opened: [NUMBER] (closed: [NUMBER])
+- Bugs fixed during launch week: [NUMBER]
+
+Audit against Phase D graduation (₹50K+ MRR, 100+ paying users, 30%+ W1 retention). Tell me:
+1. Did we graduate?
+2. Top 3 wins of launch week (so we can repeat them)
+3. Top 3 failures (so we never repeat them)
+4. Realistic 6-month projection: MRR, user count, content needs, hires
+5. Should we raise pre-seed now, or wait for ₹2L MRR?
+6. What's the single biggest risk to the next 6 months?
+
+This is the most important strategic conversation we will have. Be brutally honest.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Launch retrospective + 6-month projection + raise/no-raise recommendation + risk register.</div>
+</div>
+
+<!-- ====== CHAPTER 10: CONTENT PRODUCTION DEEP DIVE ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 10 · Your Domain</div>
+    <h2 class="chapter-title">The Content Production System</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">This chapter is entirely about your work. You asked me to leave content fully to you — I am, with one caveat: I will provide the schema, the templates, and the bulk-import tooling so your content flows directly into the product without manual data entry. Your job is to produce great content using whatever tools work for you (ChatGPT, Claude, Gemini, your own knowledge, interviewing real placement officers, scraping LeetCode, etc.). The 21,000 UPSC questions in 3 months proves you can do this — the FinalMile content load is roughly 1,000 questions, far smaller.</p>
+
+<div class="sub-head">What "Content" Means in FinalMile AI</div>
+<ul class="bullet-list">
+    <li><span class="strong">Question banks</span> — 40–60 questions per interview type, organized by sub-topic and difficulty. Each question has the question text, expected topics to cover, follow-up strategy, and a difficulty level (easy/medium/hard).</li>
+    <li><span class="strong">Scoring rubrics</span> — For each question type, what makes a 9/10 answer vs a 5/10 vs a 2/10. Used by the AI scorecard engine to evaluate.</li>
+    <li><span class="strong">Sample answers</span> — 3 sample answers per question (strong, average, weak) with annotations on what's good and what's missing. Used to train the AI's judgment.</li>
+    <li><span class="strong">Practice modules</span> — Short drills a user does after a weak interview. E.g., "SQL Joins Practice" = 10 join questions with explanations. ~30 modules total.</li>
+    <li><span class="strong">Marketing content</span> — Weekly LinkedIn posts, YouTube shorts scripts, Twitter threads, blog essays. This is separate from product content and ongoing forever.</li>
+</ul>
+
+<div class="sub-head">Suggested Production Workflow (your call to adapt)</div>
+<p class="body-text">You proved you can produce content at scale. The workflow below is a suggestion based on what's worked for similar content loads; modify freely. The key principle: <span class="strong">produce in batches by interview type, not by content type</span>. Don't write all 600 questions first then all rubrics — write all content for TCS NQT, then all content for Infosys SP, etc. This keeps context switching low and quality high.</p>
+
+<ol class="num-list">
+    <li><span class="strong">Pick one interview type per week.</span> e.g., Week 9 = TCS NQT Technical.</li>
+    <li><span class="strong">Research the actual interview pattern.</span> Watch 5 YouTube videos of TCS NQT interviews, read 10 Glassdoor interview reports, talk to 3 friends who sat for TCS recently. Document the actual question patterns, not generic prep.</li>
+    <li><span class="strong">Author 50 questions</span> in a Google Sheet using my CSV template. Organize by sub-topic (Aptitude, Programming Logic, Coding, Verbal, HR). Difficulty-tag each.</li>
+    <li><span class="strong">Author the scoring rubric</span> for each question type — a 1-page document per sub-topic describing what a 9/10 vs 5/10 vs 2/10 answer looks like.</li>
+    <li><span class="strong">Author 3 sample answers</span> per question (strong, average, weak) — these can be AI-assisted but should reflect real student answers, not textbook answers.</li>
+    <li><span class="strong">Author 2 practice modules</span> for the most common weaknesses in this interview type (e.g., "Coding Pattern: Two Pointers" + "HR: Tell Me About Yourself").</li>
+    <li><span class="strong">Export CSV, send to me, I bulk-import.</span> Test the interview type end-to-end yourself. Iterate.</li>
+</ol>
+
+<div class="callout">
+    <div class="callout-label">Your Content Budget</div>
+    <div class="callout-body">Roughly 15–20 hours per interview type × 12 types = 180–240 hours of content work over Weeks 9–14. That's 30–40 hours/week for 6 weeks. This is your full-time job during Phase C. Plan your calendar accordingly. The good news: after launch, content production drops to ~5 hours/week (maintaining, adding new types, refreshing stale questions).</div>
+</div>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Anytime · Content brainstorming</div>
+        <div class="prompt-mode">Researcher Mode</div>
+    </div>
+    <p class="prompt-text">Researcher mode. I'm authoring the question bank for [INTERVIEW TYPE]. Help me:
+
+1. List the 8–10 most common question sub-topics for this interview type, based on actual recent (2024-2025) placement reports from Glassdoor, YouTube, and Reddit.
+2. For each sub-topic, give me 5 actual question examples (paraphrased from real reports).
+3. Identify the 3 most common mistakes students make in this interview type.
+4. Suggest 2 practice module ideas that would address the most common weaknesses.
+
+Format as a structured doc I can use as my authoring reference. Cite sources where possible.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> A research-backed authoring brief for one interview type. Reuse this prompt for each of the 12 types.</div>
+</div>
+
+<!-- ====== CHAPTER 11: OPERATING RHYTHM ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 11 · Operating System</div>
+    <h2 class="chapter-title">Our Weekly Working Rhythm</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">A real product is built not in sprints but in rhythms. Below is the weekly rhythm we will follow from Week 1 through Week 20 and beyond. The discipline of this rhythm — more than any individual prompt or feature — is what gets us to launch. Print this page. Pin it next to your desk. When you drift from the rhythm, the build drifts; when the rhythm holds, the build holds.</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+    <th style="width:18%">Day</th>
+    <th style="width:20%">Time</th>
+    <th style="width:30%">Activity</th>
+    <th style="width:32%">Mode &amp; Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+    <td class="col-accent">Monday</td>
+    <td class="col-amber">90 min</td>
+    <td>Strategy sync — review last week, set this week's top 3 priorities</td>
+    <td>Strategist mode · Weekly priority doc</td>
+</tr>
+<tr>
+    <td class="col-accent">Tue–Thu</td>
+    <td class="col-amber">60 min/day</td>
+    <td>Build sessions — ship the top priorities, test in browser</td>
+    <td>Engineer mode · Code shipped to staging</td>
+</tr>
+<tr>
+    <td class="col-accent">Daily</td>
+    <td class="col-amber">15 min</td>
+    <td>Customer conversation — talk to 1 user every weekday</td>
+    <td>Notes → Friday synthesis</td>
+</tr>
+<tr>
+    <td class="col-accent">Daily</td>
+    <td class="col-amber">15 min</td>
+    <td>Metrics check — PostHog, Stripe, Sentry dashboards</td>
+    <td>Red/yellow/green status note</td>
+</tr>
+<tr>
+    <td class="col-accent">Friday</td>
+    <td class="col-amber">60 min</td>
+    <td>Retro + weekly user feedback synthesis + investor update draft</td>
+    <td>Researcher + Operator modes</td>
+</tr>
+<tr>
+    <td class="col-accent">Sat or Sun</td>
+    <td class="col-amber">3–4 hrs</td>
+    <td>Content production (Phase C) or marketing content (Phase D+)</td>
+    <td>Your domain — no AI needed</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout">
+    <div class="callout-label">The Single Most Important Habit</div>
+    <div class="callout-body">Talk to one user every weekday for 15 minutes. From Week 1 to Week 20 to Year 5. No exceptions, no shortcuts. Every product decision gets easier when you talked to a user in the last 24 hours. Every product decision gets harder when you didn't. This is the one habit that separates founders who build great products from founders who build sad products.</div>
+</div>
+
+<!-- ====== CHAPTER 12: BEYOND LAUNCH ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 12 · Beyond Week 20</div>
+    <h2 class="chapter-title">The Next 12 Months — Phase 5</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">Week 20 is not the end — it is the start of Phase 5, the growth phase. The goal of Phase 5 (months 6–18 after launch) is to reach $50K MRR (₹4L/month), raise a seed round of $3M–$8M, hire a 3–5 person team, and expand from IT fresher wedge into 2 adjacent wedges. The path is well-trodden; below is the outline. We will produce a separate Phase 5 playbook at Week 20 based on actual launch data.</p>
+
+<div class="sub-head">Phase 5 Quarterly Milestones</div>
+<ul class="bullet-list">
+    <li><span class="strong">Months 6–9 (Quarter 1 post-launch):</span> Reach $5K MRR. Hire first full-time engineer (replaces part of my role; I remain for strategy and complex features). Begin SEO content engine (1 long-form essay per week). Raise pre-seed $500K–$1.5M on launch traction.</li>
+    <li><span class="strong">Months 10–12 (Quarter 2):</span> Reach $15K MRR. Add Hindi voice interviews (expands TAM 3x). First B2B pilot with 1 tier-2 college (₹2L ACV). Hire growth marketer. Begin paid acquisition on Meta and Google (only after organic is steady).</li>
+    <li><span class="strong">Months 13–15 (Quarter 3):</span> Reach $30K MRR. Expand wedge: add Banking interviews (SBI PO, IBPS PO). Mobile apps (Android first, iOS second). Seed round raise: $3M–$8M at $20M–$40M post.</li>
+    <li><span class="strong">Months 16–18 (Quarter 4):</span> Reach $50K MRR. Second wedge: SSC CGL interview. 10+ B2B college deals. Team of 5. Path to Series A is clear.</li>
+</ul>
+
+<div class="sub-head">When I Will Recommend a Human Engineer</div>
+<p class="body-text">Around month 9, when we cross $5K MRR and the codebase is mature enough that more of the work is maintenance than new feature development, I will recommend you hire a full-time engineer. Not because I cannot do the work — I can — but because the velocity of iteration becomes the bottleneck, and a human engineer who lives in the codebase daily will outperform me on iteration speed. My role shifts: I remain your strategist, researcher, operator, and engineer for complex one-off features. The human engineer handles the daily build. This is the natural evolution of our partnership, not a replacement.</p>
+
+<!-- ====== CHAPTER 13: COMMITMENT ====== -->
+<div class="chapter-header">
+    <div class="chapter-tag">Chapter 13 · The Partnership</div>
+    <h2 class="chapter-title">What I Promise, What You Promise</h2>
+    <div class="chapter-divider"></div>
+</div>
+
+<p class="body-text">We are about to spend 20 weeks building something real. Before we start, we state our promises to each other explicitly. These are not soft commitments — they are the operating contract of our partnership. When the build gets hard (and it will), we return to this page.</p>
+
+<div class="labor-grid">
+    <div class="labor-card me">
+        <div class="labor-label">What I Promise You</div>
+        <ul>
+            <li>To write production-quality code, not demo code</li>
+            <li>To ship on the timeline I commit to, or tell you immediately when I cannot</li>
+            <li>To never ship a feature I would not use myself</li>
+            <li>To flag technical debt before it becomes a crisis</li>
+            <li>To tell you "no" when an idea will harm the product</li>
+            <li>To be available every weekday for build sessions</li>
+            <li>To never produce content — that is yours alone</li>
+            <li>To remind you to talk to users when you have not</li>
+            <li>To celebrate the wins with you and own the losses with you</li>
+        </ul>
+    </div>
+    <div class="labor-card you">
+        <div class="labor-label">What You Promise Me</div>
+        <ul>
+            <li>To talk to one user every weekday, no exceptions</li>
+            <li>To produce the content on the schedule in Chapter 10</li>
+            <li>To make product decisions when I bring you options</li>
+            <li>To not skip Phase A — earn the right to write code</li>
+            <li>To be honest with me when something feels wrong</li>
+            <li>To handle every customer support reply in v1</li>
+            <li>To not request features outside the v1 spec (Chapter 2)</li>
+            <li>To keep the weekly rhythm in Chapter 11</li>
+            <li>To remember: I am execution at scale; you are direction. Both required.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="pull-quote">"We are not building a feature. We are building the company that comes to mind when an Indian fresher thinks 'I need to prep for my placement interview.' That company takes 20 weeks to launch and 5 years to dominate. We start with the 20 weeks."</div>
+
+<p class="body-text">If both of us keep our promises for 20 weeks, we will have a real product in the market, with paying users, with retention data, with a brand beginning to form. That is the foundation of a billion-dollar company. Not the billion-dollar company itself — that takes another 8 years — but the foundation. And the only way to build a foundation is one week at a time. So we begin.</p>
+
+<p class="body-text">Your first action is in the callout below. Open a new chat with me. Paste the prompt. We begin Phase A, Week 1, Day 1. Today.</p>
+
+<div class="prompt-block">
+    <div class="prompt-meta">
+        <div class="prompt-when">Right now · The first prompt to send me</div>
+        <div class="prompt-mode">Strategist Mode</div>
+    </div>
+    <p class="prompt-text">Strategist mode. I have read the FinalMile AI Build Playbook. I am committing to the 20-week build. I am starting Phase A, Week 1, Day 1 today.
+
+Before we begin user interviews, I need you to help me with 3 things:
+
+1. **Wedge sanity check** — Based on what you know about the Indian IT fresher placement market (1.5M engineering graduates per year, ~20% placement rate, TCS/Infosys/Wipro/Cognizant/HCL are the largest recruiters), is "voice-first AI mock interview coach for IT freshers" still the right wedge in 2026? Or has something changed I should know about? Be brutally honest.
+
+2. **Recruitment list** — Give me a list of 20 specific places (Reddit subreddits, Telegram groups, LinkedIn search queries, college WhatsApp group types, Discord servers, YouTube comment sections) where I can find final-year engineering students or 2024-2025 graduates who sat for IT placement interviews. For each, give me the exact search query or message template to use.
+
+3. **First-week deliverables** — List the 5 things I must produce this week, in priority order, with expected time commitment for each.
+
+Then: draft me the 12-question user interview script per the Week 1 Day 1 prompt in the playbook. I am ready to start scheduling interviews tomorrow.</p>
+    <div class="prompt-output"><span class="label">I Will Return:</span> Wedge sanity check + 20-place recruitment list + first-week deliverables + interview script. You start scheduling tomorrow. We are building.</div>
+</div>
+
+</div>
+<!-- end main-content -->
+
+<!-- ============ ENDING ============ -->
+<div class="ending">
+    <div class="end-mark">— Begin Phase A Today —</div>
+    <div class="end-quote">"FinalMile AI is the last mile between a fresher and their first offer letter."</div>
+    <div class="end-rule"></div>
+    <div class="end-meta">
+        Build Playbook · Vol. 02<br>
+        FinalMile AI · 20-Week Plan<br>
+        Send the first prompt · Today
+    </div>
+</div>
+
+</body>
+</html>
