@@ -130,9 +130,9 @@ export const INTERVIEW_MODES = [
   },
   {
     id: "voice",
-    title: "Voice (coming soon)",
-    description: "Speak your answers. More realistic. Available on Pro plan.",
+    title: "Voice Interview",
+    description: "Speak your answers. AI talks back. Most realistic. Pro feature.",
     icon: "Mic",
-    disabled: true,
+    pro: true,
   },
 ];

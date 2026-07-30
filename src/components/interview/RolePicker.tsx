@@ -175,32 +175,32 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
             {INTERVIEW_MODES.map((m) => {
               const Icon = ICONS[m.icon] || MessageSquare;
               const isSelected = mode === m.id;
-              const isDisabled = (m as any).disabled;
+              const isPro = (m as any).pro;
               return (
                 <Card
                   key={m.id}
-                  className={`p-4 transition-all ${
-                    isDisabled
-                      ? 'cursor-not-allowed opacity-60'
-                      : isSelected
-                      ? 'cursor-pointer border-primary ring-2 ring-primary/20'
-                      : 'cursor-pointer hover:border-primary/50'
+                  className={`cursor-pointer p-4 transition-all ${
+                    isSelected
+                      ? 'border-primary ring-2 ring-primary/20'
+                      : 'hover:border-primary/50'
                   }`}
-                  onClick={() => !isDisabled && setMode(m.id)}
+                  onClick={() => setMode(m.id)}
                 >
                   <div className="mb-1 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Icon className="h-4 w-4 text-primary" />
                       <h3 className="font-semibold">{m.title}</h3>
                     </div>
-                    {isSelected && (
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                    )}
-                    {isDisabled && (
-                      <Badge variant="secondary" className="text-xs">
-                        Pro
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {isPro && (
+                        <Badge variant="secondary" className="text-xs bg-primary/10 text-primary">
+                          Pro
+                        </Badge>
+                      )}
+                      {isSelected && (
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                      )}
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {m.description}
