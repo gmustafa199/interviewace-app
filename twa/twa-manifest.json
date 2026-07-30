@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/",
+  "packageId": "com.interviewace.app",
+  "host": "INTERVIEWACE_DOMAIN_REPLACE_ME",
+  "name": "InterviewAce",
+  "launcherName": "InterviewAce",
+  "display": "standalone",
+  "orientation": "default",
+  "themeColor": "#0F172A",
+  "themeColorDark": "#0F172A",
+  "navigationColor": "#0F172A",
+  "navigationColorDark": "#0F172A",
+  "navigationDividerColor": "#0F172A",
+  "navigationDividerColorDark": "#0F172A",
+  "backgroundColor": "#0F172A",
+  "enableNotifications": true,
+  "startUrl": "/?utm_source=twa",
+  "iconUrl": "https://INTERVIEWACE_DOMAIN_REPLACE_ME/icons/icon-512.png",
+  "maskableIconUrl": "https://INTERVIEWACE_DOMAIN_REPLACE_ME/icons/icon-maskable-512.png",
+  "monochromeIconUrl": "https://INTERVIEWACE_DOMAIN_REPLACE_ME/icons/icon-mono-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    { "name": "Frontend Interview", "shortName": "Frontend", "url": "/?role=frontend&utm_source=shortcut" },
+    { "name": "SWE Interview",      "shortName": "SWE",      "url": "/?role=swe&utm_source=shortcut" },
+    { "name": "Data Scientist",     "shortName": "Data Sci", "url": "/?role=data-scientist&utm_source=shortcut" }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://INTERVIEWACE_DOMAIN_REPLACE_ME/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": { "enabled": false },
+    "playBilling": { "enabled": true }
+  },
+  "alphaDependencies": { "enabled": false },
+  "enableSiteSettingsShortcut": false,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://INTERVIEWACE_DOMAIN_REPLACE_ME/",
+  "minSdkVersion": 21,
+  "_comment": "Replace INTERVIEWACE_DOMAIN_REPLACE_ME with your real domain (no https:// prefix) before running bubblewrap."
+}

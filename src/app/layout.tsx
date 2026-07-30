@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { PwaInstaller } from "@/components/pwa/PwaInstaller";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,8 +19,23 @@ export const metadata: Metadata = {
   description: "Practice real tech interviews with an AI interviewer. 8 IT roles, honest scorecards, sample better answers, and a 7-day practice plan. Free to start.",
   keywords: ["mock interview", "interview prep", "tech interview", "software engineer interview", "AI interviewer", "interview practice"],
   authors: [{ name: "InterviewAce" }],
+  manifest: "/manifest.json",
+  applicationName: "InterviewAce",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "InterviewAce",
+  },
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: ["/icons/icon-192.png"],
   },
   openGraph: {
     title: "InterviewAce — AI Mock Interviews for Tech Jobs",
@@ -34,6 +50,14 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#0F172A",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -46,6 +70,7 @@ export default function RootLayout({
       >
         {children}
         <Toaster />
+        <PwaInstaller />
       </body>
     </html>
   );
