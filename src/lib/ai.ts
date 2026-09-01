@@ -119,10 +119,15 @@ export async function chatCompletion(
     maxOutputTokens: params.max_tokens ?? 1024,
   };
 
-  // Retry on transient errors (503 high demand, 500 internal, network blips).
-  // Gemini's free tier occasionally returns 503 "Service Unavailable" under load.
-  const MAX_RETRIES = 3;
-  const INITIAL_DELAY_MS = 1500;
+  // Retry on transient errors (503 high demand, 429 rate limit, network blips).
+  // Gemini's free tier occasionally returns 503 "Service Unavailable" under load,
+  // and 429 "Too Many Requests" when the 20-req/minute quota is exceeded.
+  //
+  // IMPORTANT: Vercel Hobby plan limits functions to 60s, Pro to 300s. Keep
+  // total retry+wait time within the route's maxDuration. With 2 retries and
+  // 1s+2s backoff, worst case = 1s + 2s + 3×Gemini-response ≈ 15s. Safe.
+  const MAX_RETRIES = 2;
+  const INITIAL_DELAY_MS = 1000;
   let lastError: any = null;
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -150,7 +155,7 @@ export async function chatCompletion(
           msg
         );
       if (!isRetryable || attempt === MAX_RETRIES) throw err;
-      // Exponential backoff: 1.5s, 3s, 6s
+      // Exponential backoff: 1s, 2s
       const delay = INITIAL_DELAY_MS * Math.pow(2, attempt - 1);
       await new Promise((r) => setTimeout(r, delay));
     }

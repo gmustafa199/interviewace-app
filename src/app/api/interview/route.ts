@@ -3,7 +3,7 @@ import { unifiedChat } from '@/lib/ai';
 import { getRoleById, type Role } from '@/lib/roles';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 90; // Vercel Hobby=60, Pro=300. 90s gives retry logic headroom.
 
 type Message = {
   role: 'user' | 'assistant' | 'system';
