@@ -119,12 +119,13 @@ export async function chatCompletion(
     maxOutputTokens: params.max_tokens ?? 1024,
   };
 
-  // Retry on transient errors (503 high demand, 429 rate limit, network blips).
-  // Gemini's free tier occasionally returns 503 "Service Unavailable" under load,
-  // and 429 "Too Many Requests" when the 20-req/minute quota is exceeded.
+  // Retry on transient errors (503 high demand, 500 internal, network blips).
+  // Gemini's free tier occasionally returns 503 "Service Unavailable" under load.
   //
-  // IMPORTANT: Vercel Hobby plan limits functions to 60s, Pro to 300s. Keep
-  // total retry+wait time within the route's maxDuration. With 2 retries and
+  // IMPORTANT: Do NOT retry on 429 "Too Many Requests" — retrying just burns
+  // the quota faster. Fail fast and let the user know to wait.
+  //
+  // Vercel Hobby plan limits functions to 60s, Pro to 300s. With 2 retries and
   // 1s+2s backoff, worst case = 1s + 2s + 3×Gemini-response ≈ 15s. Safe.
   const MAX_RETRIES = 2;
   const INITIAL_DELAY_MS = 1000;
@@ -149,9 +150,17 @@ export async function chatCompletion(
     } catch (err: any) {
       lastError = err;
       const msg = String(err?.message || '');
-      // Retry on 503 (high demand), 500, 429 (rate limit), or network errors.
+      // 429 = quota exceeded — don't retry, just fail with a friendly message.
+      if (/429|Too Many Requests|quota/i.test(msg)) {
+        throw new Error(
+          'AI service quota exceeded. Gemini free tier allows 20 requests/minute. ' +
+          'Please wait 60 seconds and try again, or upgrade to a paid tier. ' +
+          'Original error: ' + msg
+        );
+      }
+      // Retry on 503 (high demand), 500, or network errors.
       const isRetryable =
-        /503|Service Unavailable|high demand|429|Too Many Requests|fetch failed|ECONNRESET|ETIMEDOUT|internal/i.test(
+        /503|Service Unavailable|high demand|fetch failed|ECONNRESET|ETIMEDOUT|internal/i.test(
           msg
         );
       if (!isRetryable || attempt === MAX_RETRIES) throw err;
