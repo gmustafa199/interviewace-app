@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/",
   "packageId": "com.interviewace.app",
-  "host": "interviewace.unprintables.com",
+  "host": "interviewace.umprintables.com",
   "name": "InterviewAce",
   "launcherName": "InterviewAce",
   "display": "standalone",
@@ -15,9 +15,9 @@
   "backgroundColor": "#0F172A",
   "enableNotifications": true,
   "startUrl": "/?utm_source=twa",
-  "iconUrl": "https://interviewace.unprintables.com/icons/icon-512.png",
-  "maskableIconUrl": "https://interviewace.unprintables.com/icons/icon-maskable-512.png",
-  "monochromeIconUrl": "https://interviewace.unprintables.com/icons/icon-mono-512.png",
+  "iconUrl": "https://interviewace.umprintables.com/icons/icon-512.png",
+  "maskableIconUrl": "https://interviewace.umprintables.com/icons/icon-maskable-512.png",
+  "monochromeIconUrl": "https://interviewace.umprintables.com/icons/icon-mono-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./android.keystore",
@@ -31,7 +31,7 @@
     { "name": "Data Scientist",     "shortName": "Data Sci", "url": "/?role=data-scientist&utm_source=shortcut" }
   ],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://interviewace.unprintables.com/manifest.json",
+  "webManifestUrl": "https://interviewace.umprintables.com/manifest.json",
   "fallbackType": "customtabs",
   "features": {
     "locationDelegation": { "enabled": false },
@@ -41,7 +41,7 @@
   "enableSiteSettingsShortcut": false,
   "isChromeOSOnly": false,
   "isMetaQuest": false,
-  "fullScopeUrl": "https://interviewace.unprintables.com/",
+  "fullScopeUrl": "https://interviewace.umprintables.com/",
   "minSdkVersion": 21,
-  "_comment": "Replace interviewace.unprintables.com with your real domain (no https:// prefix) before running bubblewrap."
+  "_comment": "Replace interviewace.umprintables.com with your real domain (no https:// prefix) before running bubblewrap."
 }
