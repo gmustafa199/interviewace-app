@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ROLES } from '@/lib/roles';
+import { useGeoPricing } from '@/hooks/use-geo-pricing';
 import {
   Code2,
   Layout,
@@ -48,6 +49,7 @@ type Props = {
 };
 
 export function LandingPage({ onStart, onPickRole }: Props) {
+  const { pricing, isIndia, country, isLoading: isGeoLoading } = useGeoPricing();
   return (
     <div className="bg-background text-foreground">
       {/* Hero */}
@@ -321,13 +323,17 @@ export function LandingPage({ onStart, onPickRole }: Props) {
         <div className="container mx-auto max-w-5xl px-4">
           <div className="mb-12 text-center">
             <Badge variant="outline" className="mb-3">
-              Simple Pricing
+              {isIndia ? 'India Pricing' : 'Simple Pricing'}
+              {!isGeoLoading && country && (
+                <span className="ml-1 opacity-60">· {country}</span>
+              )}
             </Badge>
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
               Start free. Upgrade when you're ready.
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
               No credit card required to start. Cancel anytime.
+              {isIndia && ' · GST invoice on annual plan'}
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-2">
@@ -337,13 +343,13 @@ export function LandingPage({ onStart, onPickRole }: Props) {
                 Try it out. No card required.
               </p>
               <div className="mb-6">
-                <span className="text-4xl font-bold">$0</span>
+                <span className="text-4xl font-bold">{pricing.symbol}0</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
               <ul className="mb-6 space-y-3 text-sm">
                 <li className="flex items-start">
                   <CheckCircle2 className="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
-                  3 mock interviews per month
+                  {pricing.freeInterviewsPerMonth} mock interviews per month
                 </li>
                 <li className="flex items-start">
                   <CheckCircle2 className="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
@@ -376,8 +382,11 @@ export function LandingPage({ onStart, onPickRole }: Props) {
                 For serious job seekers.
               </p>
               <div className="mb-6">
-                <span className="text-4xl font-bold">$19</span>
+                <span className="text-4xl font-bold">{pricing.monthlyLabel}</span>
                 <span className="text-muted-foreground">/month</span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  or {pricing.yearlyLabel}/year (save 30%)
+                </span>
               </div>
               <ul className="mb-6 space-y-3 text-sm">
                 <li className="flex items-start">

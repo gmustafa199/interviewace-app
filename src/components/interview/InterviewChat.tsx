@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,8 @@ import {
   Volume2,
   VolumeX,
   Trash2,
+  Pause,
+  Users,
 } from 'lucide-react';
 import type { Role } from '@/lib/roles';
 
@@ -37,6 +39,102 @@ type Props = {
   onComplete: (transcript: Message[]) => void;
 };
 
+/* ------------------------------------------------------------------ */
+/* Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Split text into spoken-sentence chunks. Each chunk is short enough to be
+ * TTS-friendly (under ~250 chars). We split on sentence enders and also on
+ * "Member X:" prefixes (which appear in UPSC/banking panel simulations).
+ */
+function splitIntoSpokenChunks(text: string): { speaker?: string; text: string }[] {
+  // Strip markdown bold/italics that don't translate well to speech
+  let clean = text.replace(/\*\*(.*?)\*\*/g, '$1');
+  clean = clean.replace(/`([^`]+)`/g, '$1');
+  clean = clean.replace(/^#+\s*/gm, '');
+
+  // Detect panel-member prefix pattern: "Chairman:", "Member 2:", etc.
+  // We split on these and tag each chunk with the speaker.
+  const speakerPattern = /(?:^|\n)\s*((?:Chairman|Member\s*\d*|Panelist|Interviewer)\s*:\s*)/gi;
+  const parts: { speaker?: string; text: string }[] = [];
+  let lastIndex = 0;
+  let currentSpeaker: string | undefined;
+
+  const matches = [...clean.matchAll(speakerPattern)];
+  if (matches.length === 0) {
+    // No speaker prefixes — split into sentences
+    return splitSentences(clean).map((t) => ({ text: t }));
+  }
+
+  // Initial segment before any speaker prefix
+  if (matches[0].index && matches[0].index > 0) {
+    const head = clean.slice(0, matches[0].index).trim();
+    if (head) {
+      parts.push(...splitSentences(head).map((t) => ({ text: t })));
+    }
+  }
+
+  matches.forEach((m, i) => {
+    const speakerLabel = m[1].replace(/:$/, '').trim();
+    currentSpeaker = speakerLabel;
+    const start = (m.index || 0) + m[0].length;
+    const end = i + 1 < matches.length ? matches[i + 1].index : clean.length;
+    const segment = clean.slice(start, end).trim();
+    if (segment) {
+      const sentences = splitSentences(segment);
+      sentences.forEach((s, idx) => {
+        parts.push({ speaker: idx === 0 ? currentSpeaker : undefined, text: s });
+      });
+    }
+    lastIndex = end;
+  });
+
+  if (parts.length === 0) {
+    return splitSentences(clean).map((t) => ({ text: t }));
+  }
+  return parts;
+}
+
+function splitSentences(text: string): string[] {
+  // Split on . ! ? followed by space/newline, but keep abbreviations intact.
+  const rough = text.match(/[^.!?]+[.!?]*(?:\s+|$)/g) || [text];
+  return rough
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
+/* ------------------------------------------------------------------ */
+/* Speaker-waveform animation                                         */
+/* ------------------------------------------------------------------ */
+
+function SpeakingWaveform() {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <span
+          key={i}
+          className="block w-0.5 rounded-full bg-primary"
+          style={{
+            height: '12px',
+            animation: `speaking-wave 0.8s ease-in-out ${i * 0.1}s infinite alternate`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes speaking-wave {
+          0%   { height: 4px;  opacity: 0.5; }
+          100% { height: 14px; opacity: 1;   }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Component                                                          */
+/* ------------------------------------------------------------------ */
+
 export function InterviewChat({
   role,
   difficulty,
@@ -46,6 +144,7 @@ export function InterviewChat({
   onComplete,
 }: Props) {
   const isVoice = mode === 'voice';
+  const isExam = role.domain === 'IndianExam';
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -60,9 +159,12 @@ export function InterviewChat({
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [autoPlay, setAutoPlay] = useState(true);
   const [micError, setMicError] = useState<string | null>(null);
   const [currentSpeakingId, setCurrentSpeakingId] = useState<string | null>(null);
+  const [currentChunkIdx, setCurrentChunkIdx] = useState(0);
+  const [totalChunks, setTotalChunks] = useState(0);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasStartedRef = useRef(false);
@@ -71,8 +173,12 @@ export function InterviewChat({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const messagesRef = useRef<Message[]>([]);
   const questionNumberRef = useRef(1);
+  const playbackQueueRef = useRef<
+    { messageId: string; chunks: { speaker?: string; text: string }[]; idx: number } | null
+  >(null);
+  const stopPlaybackRef = useRef(false);
 
-  // Keep refs in sync with state for use in callbacks
+  // Keep refs in sync
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
@@ -88,61 +194,125 @@ export function InterviewChat({
     return () => clearInterval(interval);
   }, [startTime]);
 
-  // Auto-scroll on new message
+  // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isLoading]);
 
-  // Fetch TTS audio for a message and play it
-  async function speakMessage(messageId: string, text: string) {
-    if (!autoPlay || !isVoice) return;
-    try {
-      setIsSpeaking(true);
-      setCurrentSpeakingId(messageId);
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) throw new Error('TTS failed');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      if (audioRef.current) {
-        audioRef.current.src = url;
-        audioRef.current.onended = () => {
-          setIsSpeaking(false);
-          setCurrentSpeakingId(null);
-          URL.revokeObjectURL(url);
-        };
-        audioRef.current.onerror = () => {
-          setIsSpeaking(false);
-          setCurrentSpeakingId(null);
-        };
-        await audioRef.current.play();
-      }
-    } catch (err) {
-      setIsSpeaking(false);
-      setCurrentSpeakingId(null);
-    }
-  }
+  /* ------------------- TTS PLAYBACK (sentence-by-sentence) -------- */
 
-  function stopSpeaking() {
+  const stopPlayback = useCallback(() => {
+    stopPlaybackRef.current = true;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
     setIsSpeaking(false);
+    setIsPaused(false);
     setCurrentSpeakingId(null);
-  }
-
-  // Kick off the interview with the first question
-  useEffect(() => {
-    if (hasStartedRef.current) return;
-    hasStartedRef.current = true;
-    void askNextQuestion([]);
+    setCurrentChunkIdx(0);
+    setTotalChunks(0);
+    playbackQueueRef.current = null;
   }, []);
+
+  const playChunkQueue = useCallback(async () => {
+    const queue = playbackQueueRef.current;
+    if (!queue) return;
+
+    while (queue.idx < queue.chunks.length) {
+      if (stopPlaybackRef.current) return;
+
+      const chunk = queue.chunks[queue.idx];
+      setCurrentChunkIdx(queue.idx + 1);
+
+      try {
+        const res = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: chunk.text,
+            speed: 0.92, // slightly slower = more natural
+          }),
+        });
+        if (!res.ok) break;
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        if (stopPlaybackRef.current) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+
+        await new Promise<void>((resolve) => {
+          const audio = audioRef.current;
+          if (!audio) {
+            resolve();
+            return;
+          }
+          audio.src = url;
+          audio.onended = () => {
+            URL.revokeObjectURL(url);
+            // 300ms pause between sentences — sounds like a real human
+            setTimeout(resolve, 300);
+          };
+          audio.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve();
+          };
+          audio.play().catch(() => resolve());
+        });
+
+        queue.idx += 1;
+      } catch {
+        break;
+      }
+    }
+
+    if (!stopPlaybackRef.current) {
+      setIsSpeaking(false);
+      setIsPaused(false);
+      setCurrentSpeakingId(null);
+      setCurrentChunkIdx(0);
+      setTotalChunks(0);
+      playbackQueueRef.current = null;
+    }
+  }, []);
+
+  const speakMessage = useCallback(
+    async (messageId: string, text: string) => {
+      if (!isVoice) return;
+      stopPlaybackRef.current = false;
+      const chunks = splitIntoSpokenChunks(text);
+      if (chunks.length === 0) return;
+
+      playbackQueueRef.current = { messageId, chunks, idx: 0 };
+      setIsSpeaking(true);
+      setIsPaused(false);
+      setCurrentSpeakingId(messageId);
+      setTotalChunks(chunks.length);
+      setCurrentChunkIdx(1);
+      await playChunkQueue();
+    },
+    [isVoice, playChunkQueue, stopPlayback]
+  );
+
+  const pausePlayback = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsPaused(true);
+    }
+  }, []);
+
+  const resumePlayback = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => {});
+      setIsPaused(false);
+    }
+  }, []);
+
+  /* ------------------- INTERVIEW FLOW ----------------------------- */
 
   async function askNextQuestion(history: Message[]) {
     setIsLoading(true);
@@ -167,11 +337,9 @@ export function InterviewChat({
       const aiMessage: Message = { role: 'assistant', content: data.reply };
       const newMessages = [...history, aiMessage];
       setMessages(newMessages);
-      // Auto-play the AI's voice in voice mode
       const messageId = `msg-${newMessages.length - 1}`;
       if (isVoice) {
-        // slight delay so the chat renders first
-        setTimeout(() => speakMessage(messageId, aiMessage.content), 200);
+        setTimeout(() => speakMessage(messageId, aiMessage.content), 250);
       }
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.');
@@ -180,7 +348,14 @@ export function InterviewChat({
     }
   }
 
-  // --- Voice Recording ---
+  useEffect(() => {
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
+    void askNextQuestion([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* ------------------- VOICE RECORDING ---------------------------- */
 
   async function startRecording() {
     setMicError(null);
@@ -192,9 +367,7 @@ export function InterviewChat({
         if (e.data.size > 0) audioChunksRef.current.push(e.data);
       };
       recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: 'audio/webm',
-        });
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         stream.getTracks().forEach((t) => t.stop());
         await transcribeAudio(audioBlob);
       };
@@ -220,14 +393,11 @@ export function InterviewChat({
   async function transcribeAudio(blob: Blob) {
     setIsTranscribing(true);
     try {
-      // convert to base64
       const reader = new FileReader();
       const base64 = await new Promise<string>((resolve, reject) => {
         reader.onloadend = () => {
           const result = reader.result as string;
-          // strip the data URL prefix
-          const base64Data = result.split(',')[1];
-          resolve(base64Data);
+          resolve(result.split(',')[1]);
         };
         reader.onerror = reject;
         reader.readAsDataURL(blob);
@@ -253,24 +423,22 @@ export function InterviewChat({
     }
   }
 
+  /* ------------------- SUBMIT ------------------------------------- */
+
   async function handleSubmit() {
     if (!input.trim() || isLoading) return;
-    // stop any playing audio
-    stopSpeaking();
+    stopPlayback();
     const userMessage: Message = { role: 'user', content: input.trim() };
     const newMessages = [...messagesRef.current, userMessage];
     setMessages(newMessages);
     setInput('');
 
     const nextQuestionNumber = questionNumberRef.current + 1;
-
     if (nextQuestionNumber > totalQuestions) {
-      // Interview is done — pass transcript to parent for feedback
       setIsFinishing(true);
       onComplete(newMessages);
       return;
     }
-
     setQuestionNumber(nextQuestionNumber);
     await askNextQuestion(newMessages);
   }
@@ -282,28 +450,27 @@ export function InterviewChat({
     }
   }
 
-  function clearInput() {
-    setInput('');
-  }
+  /* ------------------- RENDER HELPERS ----------------------------- */
 
-  const progressPercent = Math.min(
-    100,
-    ((questionNumber - 1) / totalQuestions) * 100
-  );
-
+  const progressPercent = Math.min(100, ((questionNumber - 1) / totalQuestions) * 100);
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
 
+  // Detect panel speaker from message content (for Indian exam panels)
+  function extractSpeaker(content: string): string | null {
+    const m = content.match(/^\s*(Chairman|Member\s*\d*|Panelist|Interviewer)\s*:\s*/i);
+    return m ? m[1].replace(/\s+/g, ' ').trim() : null;
+  }
+
   return (
     <div className="flex h-screen flex-col bg-background">
-      {/* Hidden audio element for TTS playback */}
       <audio ref={audioRef} className="hidden" />
 
       {/* Top bar */}
-      <header className="border-b bg-background/95 backdrop-blur">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto max-w-4xl px-4 py-3">
           <div className="flex items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => { stopSpeaking(); onBack(); }}>
+            <Button variant="ghost" size="sm" onClick={() => { stopPlayback(); onBack(); }}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Exit
             </Button>
@@ -312,13 +479,18 @@ export function InterviewChat({
                 <Badge variant={isSpeaking ? 'default' : 'outline'}>
                   {isSpeaking ? (
                     <>
-                      <Volume2 className="mr-1 h-3 w-3 animate-pulse" />
-                      Speaking
+                      <SpeakingWaveform />
+                      <span className="ml-2 text-xs">
+                        Speaking {currentChunkIdx}/{totalChunks}
+                      </span>
+                    </>
+                  ) : isPaused ? (
+                    <>
+                      <Pause className="mr-1 h-3 w-3" /> Paused
                     </>
                   ) : (
                     <>
-                      <Mic className="mr-1 h-3 w-3" />
-                      Voice Mode
+                      <Mic className="mr-1 h-3 w-3" /> Voice Mode
                     </>
                   )}
                 </Badge>
@@ -329,10 +501,15 @@ export function InterviewChat({
                   AI Interviewer
                 </Badge>
               )}
+              {isExam && role.panelSize && (
+                <Badge variant="outline" className="hidden sm:flex">
+                  <Users className="mr-1 h-3 w-3" />
+                  {role.panelSize}-member panel
+                </Badge>
+              )}
               <Badge variant="secondary">
                 <Clock className="mr-1 h-3 w-3" />
-                {mins.toString().padStart(2, '0')}:
-                {secs.toString().padStart(2, '0')}
+                {mins.toString().padStart(2, '0')}:{secs.toString().padStart(2, '0')}
               </Badge>
             </div>
           </div>
@@ -341,11 +518,11 @@ export function InterviewChat({
           <div className="mt-3">
             <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
               <span className="font-medium">
-                {role.title} · {difficulty} level{isVoice ? ' · Voice' : ''}
+                {role.title} · {difficulty} {isExam ? 'depth' : 'level'}
+                {isVoice ? ' · Voice' : ''}
               </span>
               <span>
-                Question {Math.min(questionNumber, totalQuestions)} of{' '}
-                {totalQuestions}
+                Question {Math.min(questionNumber, totalQuestions)} of {totalQuestions}
               </span>
             </div>
             <Progress value={progressPercent} className="h-1.5" />
@@ -366,6 +543,7 @@ export function InterviewChat({
           {messages.map((msg, i) => {
             const messageId = `msg-${i}`;
             const isAiSpeakingThis = currentSpeakingId === messageId;
+            const speaker = msg.role === 'assistant' ? extractSpeaker(msg.content) : null;
             return (
               <div
                 key={i}
@@ -373,17 +551,20 @@ export function InterviewChat({
                   msg.role === 'user' ? 'flex-row-reverse' : ''
                 }`}
               >
-                <div
-                  className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${
-                    msg.role === 'user'
-                      ? 'bg-secondary text-secondary-foreground'
-                      : 'bg-primary text-primary-foreground'
-                  }`}
-                >
-                  {msg.role === 'user' ? (
-                    <User className="h-4 w-4" />
-                  ) : (
-                    <Bot className="h-4 w-4" />
+                <div className="flex flex-col items-center gap-1">
+                  <div
+                    className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${
+                      msg.role === 'user'
+                        ? 'bg-secondary text-secondary-foreground'
+                        : 'bg-primary text-primary-foreground'
+                    }`}
+                  >
+                    {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                  </div>
+                  {isAiSpeakingThis && (
+                    <div className="mt-1">
+                      <SpeakingWaveform />
+                    </div>
                   )}
                 </div>
                 <div
@@ -393,34 +574,55 @@ export function InterviewChat({
                       : 'bg-muted'
                   }`}
                 >
+                  {speaker && (
+                    <div className="mb-1 flex items-center gap-1 text-[10px] uppercase tracking-wider text-primary">
+                      <Users className="h-3 w-3" /> {speaker}
+                    </div>
+                  )}
                   <p className="whitespace-pre-wrap text-sm leading-relaxed">
                     {msg.content}
                   </p>
-                  {/* AI message actions in voice mode */}
                   {msg.role === 'assistant' && isVoice && (
                     <div className="mt-2 flex items-center gap-2 border-t border-border/50 pt-2">
                       <Button
                         size="sm"
                         variant="ghost"
                         className="h-7 px-2 text-xs"
-                        onClick={() =>
-                          isAiSpeakingThis
-                            ? stopSpeaking()
-                            : speakMessage(messageId, msg.content)
-                        }
+                        onClick={() => {
+                          if (isAiSpeakingThis) {
+                            if (isPaused) resumePlayback();
+                            else pausePlayback();
+                          } else {
+                            speakMessage(messageId, msg.content);
+                          }
+                        }}
                       >
                         {isAiSpeakingThis ? (
-                          <>
-                            <VolumeX className="mr-1 h-3 w-3" />
-                            Stop
-                          </>
+                          isPaused ? (
+                            <>
+                              <Volume2 className="mr-1 h-3 w-3" /> Resume
+                            </>
+                          ) : (
+                            <>
+                              <Pause className="mr-1 h-3 w-3" /> Pause
+                            </>
+                          )
                         ) : (
                           <>
-                            <Volume2 className="mr-1 h-3 w-3" />
-                            Replay
+                            <Volume2 className="mr-1 h-3 w-3" /> Replay
                           </>
                         )}
                       </Button>
+                      {(isAiSpeakingThis && !isPaused) && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs"
+                          onClick={stopPlayback}
+                        >
+                          <VolumeX className="mr-1 h-3 w-3" /> Stop
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -444,9 +646,7 @@ export function InterviewChat({
               <div className="flex items-start gap-3">
                 <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-destructive" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-destructive">
-                    {error}
-                  </p>
+                  <p className="text-sm font-medium text-destructive">{error}</p>
                   <Button
                     variant="outline"
                     size="sm"
@@ -464,9 +664,7 @@ export function InterviewChat({
             <Card className="border-amber-500 bg-amber-500/5 p-3">
               <div className="flex items-start gap-2">
                 <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
-                <p className="text-xs text-amber-700 dark:text-amber-400">
-                  {micError}
-                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-400">{micError}</p>
               </div>
             </Card>
           )}
@@ -493,23 +691,21 @@ export function InterviewChat({
       <footer className="border-t bg-background/95 backdrop-blur">
         <div className="container mx-auto max-w-3xl px-4 py-4">
           {isVoice && (
-            <div className="mb-3 flex items-center justify-center gap-2">
+            <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
               <Button
                 variant={isRecording ? 'destructive' : 'default'}
                 size="sm"
                 onClick={isRecording ? stopRecording : startRecording}
-                disabled={isTranscribing || isLoading || isFinishing}
+                disabled={isTranscribing || isLoading || isFinishing || isSpeaking}
                 className="rounded-full"
               >
                 {isRecording ? (
                   <>
-                    <Square className="mr-2 h-4 w-4" />
-                    Stop Recording
+                    <Square className="mr-2 h-4 w-4" /> Stop Recording
                   </>
                 ) : isTranscribing ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Transcribing...
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Transcribing...
                   </>
                 ) : (
                   <>
@@ -518,17 +714,6 @@ export function InterviewChat({
                   </>
                 )}
               </Button>
-              {isSpeaking && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={stopSpeaking}
-                  className="rounded-full"
-                >
-                  <VolumeX className="mr-2 h-4 w-4" />
-                  Stop Audio
-                </Button>
-              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -557,7 +742,7 @@ export function InterviewChat({
               <Button
                 variant="outline"
                 size="lg"
-                onClick={clearInput}
+                onClick={() => setInput('')}
                 className="flex-shrink-0"
                 title="Clear"
               >
@@ -584,7 +769,7 @@ export function InterviewChat({
               ? 'Click "Hold to Speak", answer out loud, then review and send.'
               : questionNumber < totalQuestions
               ? 'Answer the question, then send. The interviewer will ask the next one.'
-              : 'This is the last question. After your answer, you\'ll get your scorecard.'}
+              : "This is the last question. After your answer, you'll get your scorecard."}
           </p>
         </div>
       </footer>
