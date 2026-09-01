@@ -177,7 +177,8 @@ export async function chatCompletion(
 /* Provider detection                                                 */
 /* ------------------------------------------------------------------ */
 
-export function getActiveProvider(): 'gemini' | 'zai' | 'none' {
+export function getActiveProvider(): 'openai' | 'gemini' | 'zai' | 'none' {
+  if (process.env.OPENAI_API_KEY) return 'openai';
   if (process.env.GEMINI_API_KEY) return 'gemini';
   if (process.env.ZAI_API_KEY) return 'zai';
   // On the dev box, /etc/.z-ai-config exists with built-in credentials.
@@ -196,13 +197,85 @@ export function getActiveProvider(): 'gemini' | 'zai' | 'none' {
 }
 
 /* ------------------------------------------------------------------ */
-/* Unified chat — picks Gemini or Z.ai based on env vars              */
+/* OpenAI chat (gpt-4o-mini by default)                                */
+/* ------------------------------------------------------------------ */
+
+async function openaiChatCompletion(
+  params: ChatCompletionParams
+): Promise<ChatCompletionResponse> {
+  const apiKey = process.env.OPENAI_API_KEY!;
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+
+  const body: any = {
+    model,
+    messages: params.messages,
+    temperature: params.temperature ?? 0.7,
+    max_tokens: params.max_tokens ?? 2048,
+  };
+
+  // Retry on transient errors (503, 429 with backoff, network errors).
+  // OpenAI 429 is throttled — wait and retry, since they don't hard-cap.
+  const MAX_RETRIES = 2;
+  const INITIAL_DELAY_MS = 1500;
+  let lastError: any = null;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        const isRetryable =
+          res.status === 429 || res.status === 500 || res.status === 503;
+        if (isRetryable && attempt < MAX_RETRIES) {
+          await new Promise((r) =>
+            setTimeout(r, INITIAL_DELAY_MS * Math.pow(2, attempt - 1))
+          );
+          continue;
+        }
+        throw new Error(
+          `OpenAI API error ${res.status}: ${errText.slice(0, 500)}`
+        );
+      }
+
+      const data = await res.json();
+      const content = data?.choices?.[0]?.message?.content || '';
+      return {
+        choices: [{ message: { role: 'assistant', content } }],
+      };
+    } catch (err: any) {
+      lastError = err;
+      const msg = String(err?.message || '');
+      const isRetryable =
+        /fetch failed|ECONNRESET|ETIMEDOUT|503|internal/i.test(msg);
+      if (!isRetryable || attempt === MAX_RETRIES) throw err;
+      await new Promise((r) =>
+        setTimeout(r, INITIAL_DELAY_MS * Math.pow(2, attempt - 1))
+      );
+    }
+  }
+  throw lastError || new Error('Unknown error in openaiChatCompletion');
+}
+
+/* ------------------------------------------------------------------ */
+/* Unified chat — picks OpenAI / Gemini / Z.ai based on env vars      */
 /* ------------------------------------------------------------------ */
 
 export async function unifiedChat(
   params: ChatCompletionParams
 ): Promise<ChatCompletionResponse> {
   const provider = getActiveProvider();
+
+  if (provider === 'openai') {
+    return openaiChatCompletion(params);
+  }
 
   if (provider === 'gemini') {
     return chatCompletion(params);
@@ -225,6 +298,7 @@ export async function unifiedChat(
   }
 
   throw new Error(
-    'No AI provider configured. Set either GEMINI_API_KEY or ZAI_API_KEY environment variable.'
+    'No AI provider configured. Set one of: OPENAI_API_KEY (recommended, $0.01/interview), ' +
+    'GEMINI_API_KEY (free tier = 20 req/day, not for production), or ZAI_API_KEY.'
   );
 }
