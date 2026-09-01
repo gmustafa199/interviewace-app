@@ -116,7 +116,7 @@ export async function chatCompletion(
 
   const config: GenerationConfig = {
     temperature: params.temperature ?? 0.7,
-    maxOutputTokens: params.max_tokens ?? 1024,
+    maxOutputTokens: params.max_tokens ?? 2048, // was 1024 — caused mid-sentence truncation
   };
 
   // Retry on transient errors (503 high demand, 500 internal, network blips).

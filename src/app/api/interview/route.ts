@@ -212,7 +212,7 @@ ${transcriptStr}
     const completion = await unifiedChat({
       messages: [{ role: 'user', content: userTurn }],
       temperature: 0.7,
-      max_tokens: 500,
+      max_tokens: 2048, // was 500 — too low, caused truncation mid-sentence
     });
 
     const reply = completion.choices[0]?.message?.content || '';
