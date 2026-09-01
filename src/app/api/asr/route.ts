@@ -1,3 +1,13 @@
+/**
+ * ASR endpoint — uses Z.ai SDK if ZAI_API_KEY is set, otherwise returns
+ * an error and the client falls back to browser Web Speech API.
+ *
+ * Browser fallback: the client uses webkitSpeechRecognition (Chrome/Edge)
+ * which is free and supports Indian English + Hindi.
+ *
+ * To enable server-side ASR later: set ZAI_API_KEY or GOOGLE_ASR_KEY.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getZAI } from '@/lib/zai';
 
@@ -20,14 +30,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const zai = await getZAI();
+    const hasZai = !!process.env.ZAI_API_KEY;
+    if (!hasZai) {
+      return NextResponse.json(
+        {
+          error: 'Server-side ASR not configured. Use browser Web Speech API instead.',
+          use_browser_asr: true,
+        },
+        { status: 501 }
+      );
+    }
 
+    const zai = await getZAI();
     const response: any = await zai.audio.asr.create({
       file_base64: audio_base64,
     } as any);
 
     const text = response?.text || response?.choices?.[0]?.message?.content || '';
-
     if (!text) {
       return NextResponse.json(
         { error: 'Could not transcribe audio' },
@@ -39,7 +58,10 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error('ASR API error:', err);
     return NextResponse.json(
-      { error: err?.message || 'Failed to transcribe audio' },
+      {
+        error: err?.message || 'Failed to transcribe audio',
+        use_browser_asr: true,
+      },
       { status: 500 }
     );
   }

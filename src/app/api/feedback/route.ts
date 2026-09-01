@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getZAI } from '@/lib/zai';
+import { unifiedChat } from '@/lib/ai';
 import { getRoleById, type ScoringDimension } from '@/lib/roles';
 
 export const runtime = 'nodejs';
@@ -103,8 +103,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
 
-    const zai = await getZAI();
-
     const transcriptStr = (transcript || [])
       .filter((m) => m.role !== 'system' && m.content)
       .map((m) => {
@@ -125,13 +123,11 @@ export async function POST(req: NextRequest) {
       isExam
     );
 
-    const completion = await zai.chat.completions.create({
+    const completion = await unifiedChat({
       messages: [{ role: 'user', content: userTurn }],
       temperature: 0.4,
-      // @ts-ignore
       max_tokens: 2000,
-      thinking: { type: 'disabled' },
-    } as any);
+    });
 
     const feedback = completion.choices[0]?.message?.content || '';
 

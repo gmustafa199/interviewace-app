@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getZAI } from '@/lib/zai';
+import { unifiedChat } from '@/lib/ai';
 import { getRoleById, type Role } from '@/lib/roles';
 
 export const runtime = 'nodejs';
@@ -175,8 +175,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid role: ' + role }, { status: 400 });
     }
 
-    const zai = await getZAI();
-
     const instructions = buildInstructions(
       roleInfo,
       difficulty || 'mid',
@@ -211,13 +209,11 @@ ${transcriptStr}
 [Now produce your next single message as the INTERVIEWER. Output ONLY that message, no preamble.]`;
     }
 
-    const completion = await zai.chat.completions.create({
+    const completion = await unifiedChat({
       messages: [{ role: 'user', content: userTurn }],
       temperature: 0.7,
-      // @ts-ignore — SDK accepts max_tokens
       max_tokens: 500,
-      thinking: { type: 'disabled' },
-    } as any);
+    });
 
     const reply = completion.choices[0]?.message?.content || '';
 

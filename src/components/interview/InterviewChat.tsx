@@ -209,6 +209,10 @@ export function InterviewChat({
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
+    // Also stop any browser TTS that's playing
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
     setIsSpeaking(false);
     setIsPaused(false);
     setCurrentSpeakingId(null);
@@ -228,6 +232,8 @@ export function InterviewChat({
       setCurrentChunkIdx(queue.idx + 1);
 
       try {
+        // Call our TTS API — it returns either audio/wav OR a JSON signal
+        // telling us to use the browser's built-in SpeechSynthesis.
         const res = await fetch('/api/tts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -236,34 +242,45 @@ export function InterviewChat({
             speed: 0.92, // slightly slower = more natural
           }),
         });
-        if (!res.ok) break;
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
 
-        if (stopPlaybackRef.current) {
-          URL.revokeObjectURL(url);
-          return;
-        }
+        const contentType = res.headers.get('content-type') || '';
 
-        await new Promise<void>((resolve) => {
-          const audio = audioRef.current;
-          if (!audio) {
-            resolve();
+        if (contentType.includes('application/json')) {
+          // Server told us to use browser TTS (no ZAI_API_KEY configured).
+          const data = await res.json();
+          if (data.use_browser_tts) {
+            await playWithBrowserTTS(data.text || chunk.text, data.rate || 0.92);
+          } else if (data.error) {
+            console.warn('TTS error, skipping:', data.error);
+          }
+        } else if (res.ok) {
+          // Server returned real audio — play it
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+
+          if (stopPlaybackRef.current) {
+            URL.revokeObjectURL(url);
             return;
           }
-          audio.src = url;
-          audio.onended = () => {
-            URL.revokeObjectURL(url);
-            // 300ms pause between sentences — sounds like a real human
-            setTimeout(resolve, 300);
-          };
-          audio.onerror = () => {
-            URL.revokeObjectURL(url);
-            resolve();
-          };
-          audio.play().catch(() => resolve());
-        });
 
+          await new Promise<void>((resolve) => {
+            const audio = audioRef.current;
+            if (!audio) {
+              resolve();
+              return;
+            }
+            audio.src = url;
+            audio.onended = () => {
+              URL.revokeObjectURL(url);
+              setTimeout(resolve, 300);
+            };
+            audio.onerror = () => {
+              URL.revokeObjectURL(url);
+              resolve();
+            };
+            audio.play().catch(() => resolve());
+          });
+        }
         queue.idx += 1;
       } catch {
         break;
@@ -279,6 +296,41 @@ export function InterviewChat({
       playbackQueueRef.current = null;
     }
   }, []);
+
+  /**
+   * Browser-based TTS fallback using Web Speech API (SpeechSynthesis).
+   * Free, built into Chrome/Edge, supports Indian English + Hindi voices.
+   */
+  const playWithBrowserTTS = (text: string, rate: number): Promise<void> => {
+    return new Promise((resolve) => {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        resolve();
+        return;
+      }
+
+      // Cancel any pending speech
+      window.speechSynthesis.cancel();
+
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = rate;
+      utter.pitch = 1.0;
+      utter.volume = 1.0;
+      utter.lang = 'en-IN'; // Indian English (falls back to en-US)
+
+      // Try to pick an Indian English voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const preferredVoice =
+        voices.find((v) => v.lang === 'en-IN') ||
+        voices.find((v) => v.lang.startsWith('en')) ||
+        voices[0];
+      if (preferredVoice) utter.voice = preferredVoice;
+
+      utter.onend = () => setTimeout(resolve, 300);
+      utter.onerror = () => resolve();
+
+      window.speechSynthesis.speak(utter);
+    });
+  };
 
   const speakMessage = useCallback(
     async (messageId: string, text: string) => {
@@ -357,8 +409,65 @@ export function InterviewChat({
 
   /* ------------------- VOICE RECORDING ---------------------------- */
 
+  // Browser-based speech recognition (Chrome/Edge only — free, instant)
+  const speechRecognitionRef = useRef<any>(null);
+
   async function startRecording() {
     setMicError(null);
+
+    // Try browser Web Speech API first (free, no server roundtrip)
+    const SpeechRecognition =
+      (typeof window !== 'undefined' &&
+        ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)) ||
+      null;
+
+    if (SpeechRecognition) {
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-IN'; // Indian English (falls back to en-US)
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        let finalTranscript = '';
+        recognition.onresult = (event: any) => {
+          let interim = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript + ' ';
+            } else {
+              interim += transcript;
+            }
+          }
+          // Show interim in the input box so user sees feedback
+          if (interim) {
+            setInput((prev) => {
+              const base = finalTranscript || prev;
+              return base + (base.endsWith(' ') ? '' : ' ') + interim;
+            });
+          }
+        };
+        recognition.onerror = (event: any) => {
+          console.warn('Speech recognition error:', event.error);
+          if (event.error === 'not-allowed') {
+            setMicError('Microphone permission denied.');
+          }
+          setIsRecording(false);
+        };
+        recognition.onend = () => {
+          setIsRecording(false);
+          // Final transcript already updated via onresult
+        };
+        recognition.start();
+        speechRecognitionRef.current = recognition;
+        setIsRecording(true);
+        return;
+      } catch (err: any) {
+        console.warn('Web Speech API failed, falling back to MediaRecorder:', err);
+      }
+    }
+
+    // Fallback: MediaRecorder + server-side ASR
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
@@ -384,6 +493,16 @@ export function InterviewChat({
   }
 
   function stopRecording() {
+    // Stop browser speech recognition if active
+    if (speechRecognitionRef.current && isRecording) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch {}
+      speechRecognitionRef.current = null;
+      setIsRecording(false);
+      return;
+    }
+    // Otherwise stop MediaRecorder
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
@@ -408,6 +527,14 @@ export function InterviewChat({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ audio_base64: base64 }),
       });
+
+      if (res.status === 501) {
+        // Server says use browser ASR — but we're in MediaRecorder fallback
+        // which means browser ASR already failed. Tell user.
+        throw new Error(
+          'Speech recognition not available in this browser. Try Chrome or Edge.'
+        );
+      }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Transcription failed');
