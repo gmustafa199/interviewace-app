@@ -16,8 +16,8 @@
  * directly with `new ZAI(config)`. Falls back to ZAI.create() for local dev.
  *
  * REQUIRED ENV VARS ON VERCEL (or any production host):
- *   ZAI_API_KEY   - public API key from https://z.ai
- *   ZAI_BASE_URL  - usually "https://api.z.ai/v1"
+ *   ZAI_API_KEY   - public API key from https://docs.z.ai (sign up → API Keys page)
+ *   ZAI_BASE_URL  - usually "https://api.z.ai/api/v1" (defaults to this)
  */
 
 import ZAI, { type ZAIConfig } from 'z-ai-web-dev-sdk';
@@ -28,7 +28,8 @@ export async function getZAI(): Promise<ZAI> {
   if (cachedInstance) return cachedInstance;
 
   const apiKey = process.env.ZAI_API_KEY;
-  const baseUrl = process.env.ZAI_BASE_URL || 'https://api.z.ai/v1';
+  // Public Z.ai API endpoint (per https://docs.z.ai)
+  const baseUrl = process.env.ZAI_BASE_URL || 'https://api.z.ai/api/v1';
 
   if (apiKey && baseUrl) {
     // Production path — use env vars directly.
