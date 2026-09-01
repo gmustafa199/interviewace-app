@@ -119,23 +119,44 @@ export async function chatCompletion(
     maxOutputTokens: params.max_tokens ?? 1024,
   };
 
-  const result = await model.generateContent({
-    contents: convoMessages,
-    generationConfig: config,
-  });
-
-  const text = result.response.text();
-
-  return {
-    choices: [
-      {
-        message: {
-          role: 'assistant',
-          content: text,
-        },
-      },
-    ],
-  };
+  // Retry on transient errors (503 high demand, 500 internal, network blips).
+  // Gemini's free tier occasionally returns 503 "Service Unavailable" under load.
+  const MAX_RETRIES = 3;
+  const INITIAL_DELAY_MS = 1500;
+  let lastError: any = null;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await model.generateContent({
+        contents: convoMessages,
+        generationConfig: config,
+      });
+      const text = result.response.text();
+      return {
+        choices: [
+          {
+            message: {
+              role: 'assistant',
+              content: text,
+            },
+          },
+        ],
+      };
+    } catch (err: any) {
+      lastError = err;
+      const msg = String(err?.message || '');
+      // Retry on 503 (high demand), 500, 429 (rate limit), or network errors.
+      const isRetryable =
+        /503|Service Unavailable|high demand|429|Too Many Requests|fetch failed|ECONNRESET|ETIMEDOUT|internal/i.test(
+          msg
+        );
+      if (!isRetryable || attempt === MAX_RETRIES) throw err;
+      // Exponential backoff: 1.5s, 3s, 6s
+      const delay = INITIAL_DELAY_MS * Math.pow(2, attempt - 1);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  // Should never reach here, but just in case:
+  throw lastError || new Error('Unknown error in chatCompletion');
 }
 
 /* ------------------------------------------------------------------ */

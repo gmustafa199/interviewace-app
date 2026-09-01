@@ -5,7 +5,7 @@
  * - Skips caching for POST/mutations (interview/feedback/tts/asr)
  */
 
-const VERSION = 'ia-v1';
+const VERSION = 'ia-v2';
 const APP_SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
