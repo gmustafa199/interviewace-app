@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ROLES, ROLE_CATEGORIES } from '@/lib/roles';
+import { ROLES } from '@/lib/roles';
 import {
   Code2,
   Layout,
@@ -15,6 +15,8 @@ import {
   BrainCircuit,
   Mic,
   MessageSquare,
+  Landmark,
+  GraduationCap,
   CheckCircle2,
   Sparkles,
   ArrowRight,
@@ -36,6 +38,8 @@ const ICONS: Record<string, any> = {
   BrainCircuit,
   Mic,
   MessageSquare,
+  Landmark,
+  GraduationCap,
 };
 
 type Props = {
@@ -62,13 +66,13 @@ export function LandingPage({ onStart, onPickRole }: Props) {
               AI-Powered Mock Interviews
             </Badge>
             <h1 className="text-balance text-4xl font-bold tracking-tight md:text-6xl">
-              Land your next <span className="text-primary">tech job</span> with
-              AI mock interviews that feel real.
+              Ace your next <span className="text-primary">interview</span> with
+              AI mock sessions that feel real.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-balance text-lg text-muted-foreground md:text-xl">
               Practice with an AI interviewer that asks real questions, follows
-              up like a human, and gives you a brutal, honest scorecard after
-              every session.
+              up like a human, and gives you an honest scorecard after every
+              session. 8 IT roles + 5 top Indian competitive exams.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button size="lg" className="w-full sm:w-auto" onClick={onStart}>
@@ -89,16 +93,16 @@ export function LandingPage({ onStart, onPickRole }: Props) {
               </Button>
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              No sign-up required to try · Free tier · 8 IT roles supported
+              No sign-up required to try · Free tier · 8 IT roles + 5 Indian exams
             </p>
           </div>
 
           {/* Trust stats */}
           <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
             {[
-              { label: 'IT Roles', value: '8', icon: Users },
+              { label: 'Roles', value: '13', icon: Users },
+              { label: 'IT + Indian Exams', value: '2 domains', icon: Target },
               { label: 'Avg. Interview', value: '15 min', icon: Zap },
-              { label: 'Feedback in', value: '30 sec', icon: Brain },
               { label: 'Free Tier', value: 'Yes', icon: Star },
             ].map((stat) => (
               <Card key={stat.label} className="p-4 text-center">
@@ -128,7 +132,7 @@ export function LandingPage({ onStart, onPickRole }: Props) {
                 step: '01',
                 title: 'Pick your role',
                 description:
-                  'Choose from 8 IT roles — SWE, Frontend, Backend, Data Scientist, DevOps, PM, Cloud, ML Engineer.',
+                  '8 IT roles (SWE, Frontend, Backend, Data Scientist, DevOps, PM, Cloud, ML) + 5 Indian exams (UPSC, IBPS PO, SBI PO, CAT/IIM MBA, RBI Grade B).',
                 icon: Target,
               },
               {
@@ -168,7 +172,7 @@ export function LandingPage({ onStart, onPickRole }: Props) {
         <div className="container mx-auto max-w-6xl px-4">
           <div className="mb-12 text-center">
             <Badge variant="outline" className="mb-3">
-              8 Roles · All IT
+              13 Roles · IT + Indian Exams
             </Badge>
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
               Pick your role. Start practicing.
@@ -178,13 +182,23 @@ export function LandingPage({ onStart, onPickRole }: Props) {
             </p>
           </div>
 
-          {ROLE_CATEGORIES.map((category) => (
-            <div key={category} className="mb-8">
-              <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-                {category}
-              </h3>
+          {['IT', 'IndianExam'].map((domain) => (
+            <div key={domain} className="mb-12">
+              <div className="mb-4 flex items-center gap-2">
+                {domain === 'IT' ? (
+                  <Code2 className="h-4 w-4 text-primary" />
+                ) : (
+                  <Landmark className="h-4 w-4 text-primary" />
+                )}
+                <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                  {domain === 'IT' ? 'IT Jobs' : 'Indian Competitive Exams'}
+                </h3>
+                <Badge variant="outline" className="text-xs">
+                  {ROLES.filter((r) => r.domain === domain).length} roles
+                </Badge>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {ROLES.filter((r) => r.category === category).map((role) => {
+                {ROLES.filter((r) => r.domain === domain).map((role) => {
                   const Icon = ICONS[role.icon] || Code2;
                   return (
                     <Card
@@ -333,7 +347,7 @@ export function LandingPage({ onStart, onPickRole }: Props) {
                 </li>
                 <li className="flex items-start">
                   <CheckCircle2 className="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
-                  All 8 roles
+                  All 13 roles (8 IT + 5 Indian exams)
                 </li>
                 <li className="flex items-start">
                   <CheckCircle2 className="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
@@ -372,7 +386,7 @@ export function LandingPage({ onStart, onPickRole }: Props) {
                 </li>
                 <li className="flex items-start">
                   <CheckCircle2 className="mr-2 h-4 w-4 flex-shrink-0 text-primary" />
-                  Voice mode (coming soon)
+                  Voice mode (AI speaks + you speak)
                 </li>
                 <li className="flex items-start">
                   <CheckCircle2 className="mr-2 h-4 w-4 flex-shrink-0 text-primary" />

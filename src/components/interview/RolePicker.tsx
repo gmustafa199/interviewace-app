@@ -1,14 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   ROLES,
+  IT_ROLES,
+  INDIAN_EXAM_ROLES,
   DIFFICULTY_LEVELS,
+  EXAM_DEPTH_LEVELS,
   INTERVIEW_MODES,
   type Role,
+  type Domain,
 } from '@/lib/roles';
 import {
   ArrowLeft,
@@ -23,8 +27,13 @@ import {
   BrainCircuit,
   Mic,
   MessageSquare,
+  Landmark,
+  GraduationCap,
   Clock,
   CheckCircle2,
+  Users,
+  IndianRupee,
+  DollarSign,
 } from 'lucide-react';
 
 const ICONS: Record<string, any> = {
@@ -38,6 +47,8 @@ const ICONS: Record<string, any> = {
   BrainCircuit,
   Mic,
   MessageSquare,
+  Landmark,
+  GraduationCap,
 };
 
 type Props = {
@@ -52,12 +63,34 @@ type Props = {
 };
 
 export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
-  const [selectedRole, setSelectedRole] = useState<Role | null>(
-    ROLES.find((r) => r.id === initialRoleId) || null
+  const initialRole = initialRoleId
+    ? ROLES.find((r) => r.id === initialRoleId) || null
+    : null;
+  const [selectedRole, setSelectedRole] = useState<Role | null>(initialRole);
+  const [activeDomain, setActiveDomain] = useState<Domain>(
+    initialRole?.domain || 'IT'
   );
   const [difficulty, setDifficulty] = useState('mid');
   const [mode, setMode] = useState('text');
   const [questionCount, setQuestionCount] = useState(8);
+
+  const rolesToShow = useMemo(
+    () => (activeDomain === 'IT' ? IT_ROLES : INDIAN_EXAM_ROLES),
+    [activeDomain]
+  );
+
+  const difficultyOptions =
+    activeDomain === 'IT' ? DIFFICULTY_LEVELS : EXAM_DEPTH_LEVELS;
+
+  const handleSelectRole = (role: Role) => {
+    setSelectedRole(role);
+    // If user picks a role from the other domain, switch the active tab
+    if (role.domain !== activeDomain) {
+      setActiveDomain(role.domain);
+      // Reset difficulty to the default of the new domain
+      setDifficulty(role.domain === 'IT' ? 'mid' : 'standard');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,7 +103,9 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
           </Button>
           <Badge variant="outline">
             <Clock className="mr-1 h-3 w-3" />
-            ~15 minutes
+            {selectedRole?.durationMinutes
+              ? `~${selectedRole.durationMinutes} min`
+              : '~15 minutes'}
           </Badge>
         </div>
 
@@ -81,16 +116,49 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
           Pick a role, choose difficulty, and start. The AI will handle the rest.
         </p>
 
-        {/* Step 1: Role */}
+        {/* Step 1: Domain tabs + Role grid */}
         <div className="mb-10">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
               1
             </div>
-            <h2 className="text-xl font-semibold">Choose your role</h2>
+            <h2 className="text-xl font-semibold">Choose your interview type</h2>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {ROLES.map((role) => {
+
+          {/* Domain tabs */}
+          <div className="mb-4 inline-flex rounded-lg border bg-muted p-1">
+            <button
+              onClick={() => setActiveDomain('IT')}
+              className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition ${
+                activeDomain === 'IT'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Code2 className="h-4 w-4" />
+              IT Jobs
+              <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                {IT_ROLES.length}
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveDomain('IndianExam')}
+              className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition ${
+                activeDomain === 'IndianExam'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Landmark className="h-4 w-4" />
+              Indian Competitive Exams
+              <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                {INDIAN_EXAM_ROLES.length}
+              </span>
+            </button>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {rolesToShow.map((role) => {
               const Icon = ICONS[role.icon] || Code2;
               const isSelected = selectedRole?.id === role.id;
               return (
@@ -101,7 +169,7 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
                       ? 'border-primary ring-2 ring-primary/20'
                       : 'hover:border-primary/50'
                   }`}
-                  onClick={() => setSelectedRole(role)}
+                  onClick={() => handleSelectRole(role)}
                 >
                   <div className="mb-2 flex items-center justify-between">
                     <div
@@ -113,30 +181,62 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
                     >
                       <Icon className="h-4 w-4" />
                     </div>
-                    {isSelected && (
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                    )}
+                    <div className="flex items-center gap-1">
+                      {role.domain === 'IndianExam' && (
+                        <Badge variant="secondary" className="text-xs">
+                          <IndianRupee className="mr-0.5 h-2.5 w-2.5" />
+                          India
+                        </Badge>
+                      )}
+                      {isSelected && (
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                      )}
+                    </div>
                   </div>
                   <h3 className="text-sm font-semibold">{role.title}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {role.tags.join(' · ')}
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                    {role.description}
                   </p>
+                  {/* Meta row */}
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+                    {role.panelSize && (
+                      <span className="flex items-center gap-0.5">
+                        <Users className="h-3 w-3" /> {role.panelSize} panel
+                      </span>
+                    )}
+                    {role.durationMinutes && (
+                      <span className="flex items-center gap-0.5">
+                        <Clock className="h-3 w-3" /> {role.durationMinutes}m
+                      </span>
+                    )}
+                    {role.pricingTier === 'india' ? (
+                      <span className="flex items-center gap-0.5">
+                        <IndianRupee className="h-3 w-3" /> 299/mo
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-0.5">
+                        <DollarSign className="h-3 w-3" /> 19/mo
+                      </span>
+                    )}
+                  </div>
                 </Card>
               );
             })}
           </div>
         </div>
 
-        {/* Step 2: Difficulty */}
+        {/* Step 2: Difficulty / Depth */}
         <div className="mb-10">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
               2
             </div>
-            <h2 className="text-xl font-semibold">Pick difficulty</h2>
+            <h2 className="text-xl font-semibold">
+              {activeDomain === 'IT' ? 'Pick difficulty' : 'Pick interview depth'}
+            </h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            {DIFFICULTY_LEVELS.map((level) => {
+            {difficultyOptions.map((level) => {
               const isSelected = difficulty === level.id;
               return (
                 <Card
@@ -262,7 +362,7 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
                 <span className="font-medium text-foreground">
                   {selectedRole.title}
                 </span>{' '}
-                · {difficulty} level · {questionCount} questions
+                · {difficulty} · {questionCount} questions
               </span>
             ) : (
               <span>Please pick a role to continue</span>

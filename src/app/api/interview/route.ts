@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ZAI from 'z-ai-web-dev-sdk';
-import { ROLES } from '@/lib/roles';
+import { getRoleById, type Role } from '@/lib/roles';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -13,12 +13,16 @@ type Message = {
 type RequestBody = {
   role: string;
   difficulty: string;
-  messages: Message[]; // prior chat history (assistant + user alternating)
+  messages: Message[];
   questionNumber: number;
   totalQuestions: number;
 };
 
-const DIFFICULTY_GUIDE: Record<string, string> = {
+/* ------------------------------------------------------------------ */
+/* Difficulty guides per domain                                       */
+/* ------------------------------------------------------------------ */
+
+const IT_DIFFICULTY_GUIDE: Record<string, string> = {
   junior:
     "The candidate is junior (0-2 years experience). Ask foundational questions appropriate for entry-level. Don't expect deep system design. Focus on fundamentals, basic data structures, simple problem-solving, and eagerness to learn.",
   mid: "The candidate is mid-level (3-5 years experience). Ask standard industry questions. Expect working knowledge of patterns, basic system design, and ability to discuss trade-offs.",
@@ -26,21 +30,26 @@ const DIFFICULTY_GUIDE: Record<string, string> = {
     "The candidate is senior (6+ years). Ask harder questions. Expect deep system design, leadership stories, architectural trade-offs, and ability to mentor others.",
 };
 
-function getRoleById(id: string) {
-  return ROLES.find((r) => r.id === id);
-}
+const EXAM_DEPTH_GUIDE: Record<string, string> = {
+  fresher:
+    'This is the candidate\'s first mock interview — be encouraging. Light follow-ups. Help them feel the format without overwhelming them.',
+  standard:
+    'Standard exam-day intensity. Realistic follow-ups. Treat this as the real interview.',
+  rigorous:
+    'Aggressive panel. Deep grilling. Stress questions. Push the candidate hard to reveal weak spots.',
+};
 
-function buildInstructions(
-  role: string,
+/* ------------------------------------------------------------------ */
+/* Prompt builders                                                    */
+/* ------------------------------------------------------------------ */
+
+function buildITInstructions(
+  role: Role,
   difficulty: string,
   questionNumber: number,
   totalQuestions: number
 ): string {
-  const roleInfo = getRoleById(role);
-  if (!roleInfo) return 'You are a helpful interview coach.';
-
-  const difficultyGuide = DIFFICULTY_GUIDE[difficulty] || DIFFICULTY_GUIDE.mid;
-
+  const difficultyGuide = IT_DIFFICULTY_GUIDE[difficulty] || IT_DIFFICULTY_GUIDE.mid;
   const isLast = questionNumber >= totalQuestions;
   const isSecondToLast = questionNumber === totalQuestions - 1;
 
@@ -48,21 +57,21 @@ function buildInstructions(
   if (questionNumber === 1) {
     structureHint = `This is the FIRST question. Briefly introduce yourself as the interviewer (1 sentence), then ask a behavioral warm-up question like "Tell me about yourself and why you're interested in this role." or "Walk me through a recent project you're proud of."`;
   } else if (isSecondToLast) {
-    structureHint = `This is the second-to-last question. Ask a technical or case question relevant to ${roleInfo.title}. Topics to consider: ${roleInfo.tags.join(', ')}.`;
+    structureHint = `This is the second-to-last question. Ask a technical or case question relevant to ${role.title}. Topics to consider: ${role.tags.join(', ')}.`;
   } else if (isLast) {
     structureHint = `This is the FINAL question. Ask a closing question like "Do you have any questions for me?" or "Where do you see yourself in 3 years?" Then thank them for their time. DO NOT give feedback yet.`;
   } else {
-    structureHint = `Continue the interview. Ask your next question. Mix behavioral and technical. Topics to consider: ${roleInfo.tags.join(', ')}.`;
+    structureHint = `Continue the interview. Ask your next question. Mix behavioral and technical. Topics to consider: ${role.tags.join(', ')}.`;
   }
 
-  return `You are an experienced technical interviewer at a top tech company (think Google, Amazon, Stripe). You are conducting a mock interview for the role of ${roleInfo.title}.
+  return `You are an experienced technical interviewer at a top tech company (think Google, Amazon, Stripe). You are conducting a mock interview for the role of ${role.title}.
 
 ${difficultyGuide}
 
 ROLE CONTEXT:
-- Position: ${roleInfo.title}
-- Category: ${roleInfo.category}
-- Key topics: ${roleInfo.tags.join(', ')}
+- Position: ${role.title}
+- Category: ${role.category}
+- Key topics: ${role.tags.join(', ')}
 
 YOUR JOB:
 - Ask ONE question at a time, then wait for the candidate's answer.
@@ -81,6 +90,74 @@ OUTPUT RULES:
 - Never reveal you are an AI. Stay in character as a human interviewer.`;
 }
 
+function buildExamInstructions(
+  role: Role,
+  depth: string,
+  questionNumber: number,
+  totalQuestions: number
+): string {
+  const depthGuide = EXAM_DEPTH_GUIDE[depth] || EXAM_DEPTH_GUIDE.standard;
+  const panelSize = role.panelSize || 5;
+  const duration = role.durationMinutes || 30;
+
+  const isLast = questionNumber >= totalQuestions;
+  const isFirst = questionNumber === 1;
+
+  let structureHint = '';
+  if (isFirst) {
+    structureHint = `This is the OPENING question. The Chairman of the panel welcomes the candidate and asks a warm-up question — typically about the candidate's background, home state, graduation subject, or hobbies (from the DAF — Detailed Application Form). One question only.`;
+  } else if (isLast) {
+    structureHint = `This is the CLOSING question. Ask a final situational or hobby-related question, then thank the candidate. Do NOT give any feedback.`;
+  } else {
+    structureHint = `Continue the interview. A different panel member can take over. Vary the question type across: (a) current affairs, (b) situational judgment / ethics, (c) graduation subject depth, (d) hobby or DAF-based, (e) opinion on a policy issue.`;
+  }
+
+  return `You are conducting a mock interview for the ${role.title} selection process.
+
+${role.extraPromptContext || ''}
+
+INTERVIEW CONFIG:
+- Panel size: ${panelSize} members
+- Duration: ~${duration} minutes
+- Depth: ${depthGuide}
+- This is question ${questionNumber} of ${totalQuestions}.
+- ${structureHint}
+
+CANDIDATE CONTEXT TO ASSUME (unless they tell you otherwise):
+- Indian candidate, age 22-28
+- Has cleared the written/Mains exam
+- Preparing seriously for the interview round
+
+YOUR JOB:
+- Speak as one panel member at a time. You can briefly indicate which member is speaking (e.g., "Chairman:", "Member 2:") but keep it natural.
+- Ask ONE question at a time, wait for the answer, then follow up intelligently.
+- Probe depth — if they claim knowledge, test it. If they give a generic answer, push for specifics.
+- Stay in character as distinguished Indian bureaucrats / professors / bankers.
+- Use culturally appropriate references (Indian context, polity, economy, society).
+- DO NOT give feedback. Save it for the scorecard.
+
+OUTPUT RULES:
+- Respond with ONLY the next panel message. No JSON, no markdown headings.
+- Keep messages concise (1-3 sentences usually). Ask one question at a time.
+- Never reveal you are an AI. Stay in character.`;
+}
+
+function buildInstructions(
+  role: Role,
+  difficulty: string,
+  questionNumber: number,
+  totalQuestions: number
+): string {
+  if (role.domain === 'IndianExam') {
+    return buildExamInstructions(role, difficulty, questionNumber, totalQuestions);
+  }
+  return buildITInstructions(role, difficulty, questionNumber, totalQuestions);
+}
+
+/* ------------------------------------------------------------------ */
+/* API                                                                */
+/* ------------------------------------------------------------------ */
+
 export async function POST(req: NextRequest) {
   try {
     const body: RequestBody = await req.json();
@@ -93,26 +170,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const roleInfo = getRoleById(role);
+    if (!roleInfo) {
+      return NextResponse.json({ error: 'Invalid role: ' + role }, { status: 400 });
+    }
+
     const zai = await ZAI.create();
 
     const instructions = buildInstructions(
-      role,
+      roleInfo,
       difficulty || 'mid',
       questionNumber || 1,
       totalQuestions || 8
     );
 
-    // The z-ai chat API expects messages to start with a user turn.
-    // We embed the interviewer instructions into a user message, then append
-    // the actual interview transcript (which alternates assistant/user starting
-    // with assistant).
-    //
-    // First-question case (no history): we send the instructions as a single
-    // user message asking the AI to produce its first interviewer message.
-    //
-    // Subsequent cases: the transcript starts with assistant (the AI's first
-    // question) which is invalid as a leading role, so we prepend a user
-    // message that re-states the instructions + asks for the next question.
+    // Filter history (drop system + empty messages)
     const safeHistory = (messages || []).filter(
       (m) => m.role !== 'system' && m.content && m.content.trim().length > 0
     );

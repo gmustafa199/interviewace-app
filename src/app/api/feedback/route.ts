@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ZAI from 'z-ai-web-dev-sdk';
-import { ROLES } from '@/lib/roles';
+import { getRoleById, type ScoringDimension } from '@/lib/roles';
 
 export const runtime = 'nodejs';
 export const maxDuration = 90;
@@ -16,38 +16,34 @@ type RequestBody = {
   transcript: Message[];
 };
 
-function getRoleById(id: string) {
-  return ROLES.find((r) => r.id === id);
+function buildScorecardSection(dimensions: ScoringDimension[] | undefined): string {
+  if (!dimensions || dimensions.length === 0) {
+    return `## Scores by Category
+- **Communication**: X/10 — one line why
+- **Technical Depth**: X/10 — one line why
+- **Problem Solving**: X/10 — one line why
+- **Behavioral / Culture Fit**: X/10 — one line why
+- **Confidence & Clarity**: X/10 — one line why`;
+  }
+  const lines = dimensions.map(
+    (d) => `- **${d.label}**: X/10 — one line why (${d.description})`
+  );
+  return `## Scores by Category\n${lines.join('\n')}`;
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const body: RequestBody = await req.json();
-    const { role, difficulty, transcript } = body;
+function buildPrompt(
+  roleTitle: string,
+  roleDescription: string,
+  difficulty: string,
+  transcriptStr: string,
+  scoringSection: string,
+  isExam: boolean
+): string {
+  const contextLine = isExam
+    ? `The candidate just finished a mock interview for the ${roleTitle} selection process at "${difficulty}" depth. ${roleDescription}`
+    : `The candidate just finished a mock interview for the role of ${roleTitle} at the ${difficulty || 'mid'} level.`;
 
-    if (!role || !transcript || transcript.length === 0) {
-      return NextResponse.json(
-        { error: 'Missing role or transcript' },
-        { status: 400 }
-      );
-    }
-
-    const roleInfo = getRoleById(role);
-    if (!roleInfo) {
-      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
-    }
-
-    const zai = await ZAI.create();
-
-    const transcriptStr = (transcript || [])
-      .filter((m) => m.role !== 'system' && m.content)
-      .map((m) => {
-        const label = m.role === 'assistant' ? 'INTERVIEWER' : 'CANDIDATE';
-        return `${label}: ${m.content}`;
-      })
-      .join('\n\n');
-
-    const userTurn = `You are an expert interview coach. The candidate just finished a mock interview for the role of ${roleInfo.title} at the ${difficulty || 'mid'} level.
+  return `You are an expert interview coach. ${contextLine}
 
 Below is the full transcript of the interview. Your job is to write a detailed, honest scorecard.
 
@@ -58,12 +54,7 @@ SCORECARD FORMAT (use markdown):
 ## Summary (2-3 sentences)
 Brief overall impression.
 
-## Scores by Category
-- **Communication**: X/10 — one line why
-- **Technical Depth**: X/10 — one line why
-- **Problem Solving**: X/10 — one line why
-- **Behavioral / Culture Fit**: X/10 — one line why
-- **Confidence & Clarity**: X/10 — one line why
+${scoringSection}
 
 ## What Went Well
 - 2-3 specific things they did well (reference actual answers)
@@ -93,6 +84,46 @@ Here is the interview transcript:
 ${transcriptStr}
 
 [Now write the scorecard. Output ONLY the scorecard in markdown.]`;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body: RequestBody = await req.json();
+    const { role, difficulty, transcript } = body;
+
+    if (!role || !transcript || transcript.length === 0) {
+      return NextResponse.json(
+        { error: 'Missing role or transcript' },
+        { status: 400 }
+      );
+    }
+
+    const roleInfo = getRoleById(role);
+    if (!roleInfo) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+    }
+
+    const zai = await ZAI.create();
+
+    const transcriptStr = (transcript || [])
+      .filter((m) => m.role !== 'system' && m.content)
+      .map((m) => {
+        const label = m.role === 'assistant' ? 'INTERVIEWER' : 'CANDIDATE';
+        return `${label}: ${m.content}`;
+      })
+      .join('\n\n');
+
+    const scoringSection = buildScorecardSection(roleInfo.scoringDimensions);
+    const isExam = roleInfo.domain === 'IndianExam';
+
+    const userTurn = buildPrompt(
+      roleInfo.title,
+      roleInfo.description,
+      difficulty || 'mid',
+      transcriptStr,
+      scoringSection,
+      isExam
+    );
 
     const completion = await zai.chat.completions.create({
       messages: [{ role: 'user', content: userTurn }],
