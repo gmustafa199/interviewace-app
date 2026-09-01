@@ -65,7 +65,9 @@ function getGeminiClient(): GoogleGenerativeAI {
 }
 
 function getModel(model?: string) {
-  const modelName = model || process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  // Default to gemini-2.0-flash (current free-tier model). Override via
+  // GEMINI_MODEL env var if you need 1.5-flash, 1.5-pro, 2.5-flash, etc.
+  const modelName = model || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
   if (!_modelCache[modelName]) {
     const client = getGeminiClient();
     _modelCache[modelName] = client.getGenerativeModel({ model: modelName });
@@ -172,7 +174,9 @@ export async function unifiedChat(
     // Dynamic import so the z-ai SDK isn't bundled into the Gemini build
     const { getZAI } = await import('./zai');
     const zai = await getZAI();
+    const zaiModel = process.env.ZAI_MODEL || 'glm-5.3-flash';
     const completion = await zai.chat.completions.create({
+      model: zaiModel,
       messages: params.messages as any,
       temperature: params.temperature,
       // @ts-ignore

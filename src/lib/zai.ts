@@ -18,6 +18,8 @@
  * REQUIRED ENV VARS ON VERCEL (or any production host):
  *   ZAI_API_KEY   - public API key from https://docs.z.ai (sign up → API Keys page)
  *   ZAI_BASE_URL  - usually "https://api.z.ai/api/v1" (defaults to this)
+ *   ZAI_MODEL     - optional, defaults to "glm-5.3-flash"
+ *                 (other options: glm-5.3, glm-5-turbo)
  */
 
 import ZAI, { type ZAIConfig } from 'z-ai-web-dev-sdk';
@@ -33,9 +35,11 @@ export async function getZAI(): Promise<ZAI> {
 
   if (apiKey && baseUrl) {
     // Production path — use env vars directly.
+    const model = process.env.ZAI_MODEL || 'glm-5.3-flash';
     const config: ZAIConfig = {
       baseUrl,
       apiKey,
+      model,
       ...(process.env.ZAI_CHAT_ID ? { chatId: process.env.ZAI_CHAT_ID } : {}),
       ...(process.env.ZAI_USER_ID ? { userId: process.env.ZAI_USER_ID } : {}),
     };

@@ -73,8 +73,37 @@ export async function POST(req: NextRequest) {
       stream: false,
     } as any);
 
+    // Detect non-audio upstream responses (e.g. public Z.ai API returns
+    // {"code":500,"msg":"404 NOT_FOUND"} because /audio/tts is not exposed
+    // on the public endpoint). In that case, fall back to browser TTS.
+    const contentType = (response as any)?.headers?.get?.('content-type') || '';
+    const isAudio = contentType.startsWith('audio/') ||
+                    contentType.startsWith('application/octet-stream');
+    if (!isAudio) {
+      // Upstream returned an error or non-audio payload — fall back gracefully.
+      return NextResponse.json({
+        use_browser_tts: true,
+        text: truncated,
+        rate: speed || 0.92,
+        pitch: 1.0,
+        lang: 'en-IN',
+      });
+    }
+
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(new Uint8Array(arrayBuffer));
+
+    // Sanity check: if we got less than 1KB, it's almost certainly an error
+    // payload, not actual audio. Fall back to browser TTS.
+    if (buffer.length < 1024) {
+      return NextResponse.json({
+        use_browser_tts: true,
+        text: truncated,
+        rate: speed || 0.92,
+        pitch: 1.0,
+        lang: 'en-IN',
+      });
+    }
 
     return new NextResponse(buffer, {
       status: 200,
