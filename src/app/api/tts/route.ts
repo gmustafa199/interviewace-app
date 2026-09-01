@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ZAI from 'z-ai-web-dev-sdk';
+import { getZAI } from '@/lib/zai';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const zai = await ZAI.create();
+    const zai = await getZAI();
 
     // Strip markdown/labels that don't sound good spoken aloud.
     // e.g. "Chairman: Welcome..." -> just "Welcome..."
