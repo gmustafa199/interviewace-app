@@ -65,9 +65,12 @@ function getGeminiClient(): GoogleGenerativeAI {
 }
 
 function getModel(model?: string) {
-  // Default to gemini-2.0-flash (current free-tier model). Override via
-  // GEMINI_MODEL env var if you need 1.5-flash, 1.5-pro, 2.5-flash, etc.
-  const modelName = model || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  // Default to gemini-3.6-flash (current model as of 2026). Override via
+  // GEMINI_MODEL env var if you need a different model.
+  // NOTE: gemini-1.5-flash, gemini-2.0-flash, and gemini-2.5-flash have
+  // all been deprecated/removed by Google — use gemini-3.6-flash or
+  // gemini-3.6-pro instead.
+  const modelName = model || process.env.GEMINI_MODEL || 'gemini-3.6-flash';
   if (!_modelCache[modelName]) {
     const client = getGeminiClient();
     _modelCache[modelName] = client.getGenerativeModel({ model: modelName });
