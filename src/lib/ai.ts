@@ -279,18 +279,52 @@ async function openaiChatCompletion(
 }
 
 /* ------------------------------------------------------------------ */
-/* Groq chat (Llama 3.3 70B by default — FREE 1,000 requests/day)      */
+/* Groq chat — auto-detects an available model from a fallback chain   */
 /* ------------------------------------------------------------------ */
+
+// Models to try in order. As of late 2026, Groq reorganized:
+//   - llama-3.3-70b-versatile → moved to Enterprise tier (paid)
+//   - openai/gpt-oss-120b → new free-tier flagship (GPT-OSS, 120B, 1K RPM)
+//   - openai/gpt-oss-20b → smaller/faster GPT-OSS variant (1K RPM)
+//   - llama-3.1-8b-instant → legacy, always available on Developer plan
+// User can override via GROQ_MODEL env var.
+const GROQ_MODEL_FALLBACKS = [
+  'openai/gpt-oss-120b',     // newest, most capable, 1K RPM free
+  'openai/gpt-oss-20b',      // smaller/faster, 1K RPM free
+  'llama-3.1-8b-instant',    // legacy 8B, always available
+  'llama-3.3-70b-versatile', // enterprise-only as of 2026, may work for some accounts
+];
 
 async function groqChatCompletion(
   params: ChatCompletionParams
 ): Promise<ChatCompletionResponse> {
-  return openaiCompatibleChat(params, {
-    apiKey: process.env.GROQ_API_KEY!,
-    baseUrl: 'https://api.groq.com/openai/v1',
-    model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
-    retryOn429: false, // Groq has a hard daily cap; don't burn it faster with retries
-  });
+  const userModels = process.env.GROQ_MODEL
+    ? [process.env.GROQ_MODEL, ...GROQ_MODEL_FALLBACKS]
+    : GROQ_MODEL_FALLBACKS;
+
+  let lastError: any = null;
+  for (const model of userModels) {
+    try {
+      return await openaiCompatibleChat(params, {
+        apiKey: process.env.GROQ_API_KEY!,
+        baseUrl: 'https://api.groq.com/openai/v1',
+        model,
+        retryOn429: false,
+      });
+    } catch (err: any) {
+      lastError = err;
+      const msg = String(err?.message || '');
+      // If this model is unavailable (404 model_not_found), try the next one.
+      // Don't retry the same model name — just move on.
+      if (/model_not_found|does not exist|do not have access/i.test(msg)) {
+        continue;
+      }
+      // For other errors (auth, rate limit, network), throw — don't waste
+      // time trying more models that will likely fail the same way.
+      throw err;
+    }
+  }
+  throw lastError || new Error('All Groq models failed');
 }
 
 /* ------------------------------------------------------------------ */
