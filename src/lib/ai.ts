@@ -1,22 +1,19 @@
 /**
- * Unified AI helper — works with Google Gemini (recommended) or Z.ai SDK.
+ * Unified AI helper — supports Groq (recommended free), OpenAI, Gemini, Z.ai.
  *
- * WHY GEMINI IS DEFAULT:
- * - $1500 free credits (vs $5 for OpenAI)
- * - Native Google Play integration (perfect for our Android TWA)
- * - Best voice quality via Google Cloud TTS
- * - Same SDK works on server + edge
+ * PROVIDER PRIORITY (set whichever env vars you have; first match wins):
+ *   1. GROQ_API_KEY  → Groq  (FREE 1,000 RPD on Llama 3.3 70B, OpenAI-compatible)
+ *   2. OPENAI_API_KEY → OpenAI (gpt-4o-mini, ~$0.01/interview)
+ *   3. GEMINI_API_KEY → Gemini (gemini-3-flash, 1,500 RPD free)
+ *   4. ZAI_API_KEY   → Z.ai SDK (dev box fallback)
  *
- * SETUP (on Vercel):
- *   1. Get a free API key at https://aistudio.google.com/app/apikey
- *   2. Add env var: GEMINI_API_KEY=your_key
- *   3. (Optional) GEMINI_MODEL=gemini-1.5-flash (default) or gemini-1.5-pro
+ * RECOMMENDED FOR FREE USE:
+ *   - Get a free Groq key at https://console.groq.com/keys (Google login, no card)
+ *   - Set GROQ_API_KEY env var → defaults to llama-3.3-70b-versatile
+ *   - 1,000 requests/day free; switch to OPENAI_API_KEY if you outgrow it
  *
- * FALLBACK:
- *   If GEMINI_API_KEY is not set, falls back to Z.ai SDK (dev box only).
- *
- * All public functions return the same shape as z-ai SDK so the API routes
- * don't need to know which provider is active.
+ * All public functions return the same shape (OpenAI-compatible ChatCompletionResponse)
+ * so the API routes don't need to know which provider is active.
  */
 
 import { GoogleGenerativeAI, type GenerationConfig } from '@google/generative-ai';
@@ -177,12 +174,12 @@ export async function chatCompletion(
 /* Provider detection                                                 */
 /* ------------------------------------------------------------------ */
 
-export function getActiveProvider(): 'openai' | 'gemini' | 'zai' | 'none' {
+export function getActiveProvider(): 'groq' | 'openai' | 'gemini' | 'zai' | 'none' {
+  if (process.env.GROQ_API_KEY) return 'groq';
   if (process.env.OPENAI_API_KEY) return 'openai';
   if (process.env.GEMINI_API_KEY) return 'gemini';
   if (process.env.ZAI_API_KEY) return 'zai';
   // On the dev box, /etc/.z-ai-config exists with built-in credentials.
-  // Check if it's there so dev mode keeps working without env vars.
   try {
     const fs = require('fs');
     if (
@@ -197,43 +194,45 @@ export function getActiveProvider(): 'openai' | 'gemini' | 'zai' | 'none' {
 }
 
 /* ------------------------------------------------------------------ */
-/* OpenAI chat (gpt-4o-mini by default)                                */
+/* OpenAI-compatible chat (used by Groq + OpenAI + any compatible)    */
 /* ------------------------------------------------------------------ */
 
-async function openaiChatCompletion(
-  params: ChatCompletionParams
+async function openaiCompatibleChat(
+  params: ChatCompletionParams,
+  opts: {
+    apiKey: string;
+    baseUrl: string;
+    model: string;
+    retryOn429?: boolean; // OpenAI: yes (rate-limited, retried with backoff). Groq: no (hard daily cap).
+  }
 ): Promise<ChatCompletionResponse> {
-  const apiKey = process.env.OPENAI_API_KEY!;
-  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-  const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
-
   const body: any = {
-    model,
+    model: opts.model,
     messages: params.messages,
     temperature: params.temperature ?? 0.7,
     max_tokens: params.max_tokens ?? 2048,
   };
 
-  // Retry on transient errors (503, 429 with backoff, network errors).
-  // OpenAI 429 is throttled — wait and retry, since they don't hard-cap.
   const MAX_RETRIES = 2;
   const INITIAL_DELAY_MS = 1500;
   let lastError: any = null;
+
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const res = await fetch(`${baseUrl}/chat/completions`, {
+      const res = await fetch(`${opts.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${opts.apiKey}`,
         },
         body: JSON.stringify(body),
       });
 
       if (!res.ok) {
         const errText = await res.text();
+        const status = res.status;
         const isRetryable =
-          res.status === 429 || res.status === 500 || res.status === 503;
+          (opts.retryOn429 && status === 429) || status === 500 || status === 503;
         if (isRetryable && attempt < MAX_RETRIES) {
           await new Promise((r) =>
             setTimeout(r, INITIAL_DELAY_MS * Math.pow(2, attempt - 1))
@@ -241,7 +240,7 @@ async function openaiChatCompletion(
           continue;
         }
         throw new Error(
-          `OpenAI API error ${res.status}: ${errText.slice(0, 500)}`
+          `${opts.baseUrl} API error ${status}: ${errText.slice(0, 500)}`
         );
       }
 
@@ -261,17 +260,51 @@ async function openaiChatCompletion(
       );
     }
   }
-  throw lastError || new Error('Unknown error in openaiChatCompletion');
+  throw lastError || new Error('Unknown error in openaiCompatibleChat');
 }
 
 /* ------------------------------------------------------------------ */
-/* Unified chat — picks OpenAI / Gemini / Z.ai based on env vars      */
+/* OpenAI chat (gpt-4o-mini by default)                                */
+/* ------------------------------------------------------------------ */
+
+async function openaiChatCompletion(
+  params: ChatCompletionParams
+): Promise<ChatCompletionResponse> {
+  return openaiCompatibleChat(params, {
+    apiKey: process.env.OPENAI_API_KEY!,
+    baseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+    retryOn429: true,
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Groq chat (Llama 3.3 70B by default — FREE 1,000 requests/day)      */
+/* ------------------------------------------------------------------ */
+
+async function groqChatCompletion(
+  params: ChatCompletionParams
+): Promise<ChatCompletionResponse> {
+  return openaiCompatibleChat(params, {
+    apiKey: process.env.GROQ_API_KEY!,
+    baseUrl: 'https://api.groq.com/openai/v1',
+    model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+    retryOn429: false, // Groq has a hard daily cap; don't burn it faster with retries
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Unified chat — picks Groq / OpenAI / Gemini / Z.ai based on env vars */
 /* ------------------------------------------------------------------ */
 
 export async function unifiedChat(
   params: ChatCompletionParams
 ): Promise<ChatCompletionResponse> {
   const provider = getActiveProvider();
+
+  if (provider === 'groq') {
+    return groqChatCompletion(params);
+  }
 
   if (provider === 'openai') {
     return openaiChatCompletion(params);
@@ -282,7 +315,6 @@ export async function unifiedChat(
   }
 
   if (provider === 'zai') {
-    // Dynamic import so the z-ai SDK isn't bundled into the Gemini build
     const { getZAI } = await import('./zai');
     const zai = await getZAI();
     const zaiModel = process.env.ZAI_MODEL || 'glm-5.3-flash';
@@ -298,7 +330,10 @@ export async function unifiedChat(
   }
 
   throw new Error(
-    'No AI provider configured. Set one of: OPENAI_API_KEY (recommended, $0.01/interview), ' +
-    'GEMINI_API_KEY (free tier = 20 req/day, not for production), or ZAI_API_KEY.'
+    'No AI provider configured. Set one of: ' +
+    'GROQ_API_KEY (recommended, FREE 1000 req/day at https://console.groq.com/keys), ' +
+    'OPENAI_API_KEY (~$0.01/interview), ' +
+    'GEMINI_API_KEY (1500 RPD free), or ' +
+    'ZAI_API_KEY.'
   );
 }
