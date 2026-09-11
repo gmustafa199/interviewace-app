@@ -61,3 +61,29 @@ Stage Summary:
 - Content fully owned by user; code fully owned by me. Explicit non-overlapping division.
 - 20+ copy-paste prompts embedded in the playbook for every week of the build.
 - User can now begin Phase A by sending the "first prompt" defined at the end of the document.
+
+---
+Task ID: 3
+Agent: Main agent (Super Z)
+Task: User demanded: remove Hindi entirely (quality unacceptable), make English voice highest human quality, refine everything to highest quality, add progress tracking + other valuable functions.
+
+Work Log:
+- Fixed Vercel domain: removed typo domain `unprintables.com` from account (DELETE /v4/domains), kept correct `interviewace.umprintables.com` on project `my-project` (PROMOTED prod, DNS + HTTPS verified 200).
+- Deleted Hindi completely: removed `src/lib/hindi-prompts.ts` + `src/lib/i18n.ts`; stripped language props/state/selectors from page.tsx, RolePicker, InterviewChat, Scorecard, interview/feedback/tts/asr APIs. Zero Hindi remnants verified via grep.
+- Voice engine rebuilt (`/api/tts`): Tier 1 = Microsoft Edge NEURAL voices via edge-tts-node (en-IN-NeerjaNeural female / en-IN-PrabhatNeural male; Chairman=male, panel members alternate by number; per-speaker pitch offsets). Prosody: base rate -8% (measured senior pace), questions -2% more, short lines +3%, long +2%. 12s hard timeout. Tier 2 = Google Translate TTS. Tier 3 = browser SpeechSynthesis with best-voice picker (Google UK Female/Male → US → MS Aria/Neerja → en-IN) + per-speaker pitch. Client: natural pause lengths (question 520ms, statement 340ms, panel handover 650ms), speaker propagated to every sentence chunk.
+- Progress tracking (`src/lib/progress.ts`): localStorage store (max 200 results), computeStats (total, avg, best, day streak via calendar-day walk, totalMinutes, last-10 trend, per-role attempts/latest/best/delta, thisWeek), scoreLabel, relativeTime.
+- LandingPage: new sticky nav + footer, gradient hero, "Your Progress" dashboard section (5 stat cards, SVG score-trend sparkline with pass line at 7/10, recent sessions with colored score chips, per-role breakdown with delta arrows + mini bars, clear-history), empty state CTA.
+- Scorecard: auto-saves each attempt to progress store; shows delta vs personal best + "First attempt" badge; animated per-dimension score bars (parsed from AI markdown via new regex in /api/feedback which now returns dimensionScores); refined markdown typography.
+- RolePicker: removed language selector; sticky bottom CTA with config summary; indigo selected states; hover-lift cards.
+- InterviewChat: gradient avatars, typing dots, panel speaker chips, big round mic button with ping pulse while recording, refined voice status badge showing which panelist is speaking, gradient progress bar.
+- Design system: indigo-600 primary, slate neutrals, consistent card/border/shadow language.
+- SECURITY INCIDENT (contained): `git add -A` staged `scripts/creds/tokens.sh`; GitHub push protection BLOCKED the push — secret never reached remote. Fixed by `git rm --cached` + `.gitignore scripts/creds/` + squashing all unpushed commits into one clean commit (b681f7e) via `git reset --soft FETCH_HEAD`; verified push range contains no creds; pushed successfully.
+- Vercel has NO git link on project `my-project` — deployed via `npx vercel deploy --prod --token` (PROMOTED).
+- Production verified: / 200, /privacy 200, manifest 200, assetlinks OK, interview API generating IBPS PO panel questions, **Edge neural TTS confirmed live on Vercel** (probed audio: 24kHz mono 48kbps MP3 = exact Edge neural output format; Google fallback would be ~32kbps).
+- Full e2e test in browser: seeded dashboard data → all widgets render; real 8-question Frontend interview → scorecard 5.0/10 with dimension bars → auto-saved → home dashboard updated live (1 session, streak 1, 2m practice).
+
+Stage Summary:
+- Production: https://interviewace.umprintables.com (all endpoints 200, neural voices live)
+- Repo: gmustafa199/interviewace-app @ b681f7e (clean history, no secrets)
+- English-only app; Hindi fully removed per user decision
+- Next for user: add ZAI_API_KEY or GEMINI_API_KEY in Vercel env vars for server-side AI (currently Z.ai dev-machine config fallback works on Vercel? No — browser/SpeechRecognition + server fallback chain handles it; API key still recommended), then Bubblewrap APK + Play Console submission. DNS CNAME for interviewace subdomain already resolves.
