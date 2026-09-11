@@ -6,6 +6,7 @@ import { RolePicker } from '@/components/interview/RolePicker';
 import { InterviewChat } from '@/components/interview/InterviewChat';
 import { Scorecard } from '@/components/interview/Scorecard';
 import type { Role } from '@/lib/roles';
+import type { Language } from '@/lib/i18n';
 
 type View = 'landing' | 'setup' | 'interview' | 'scorecard';
 
@@ -19,6 +20,7 @@ type InterviewConfig = {
   difficulty: string;
   mode: string;
   totalQuestions: number;
+  language: Language;
 };
 
 export default function Home() {
@@ -95,6 +97,7 @@ export default function Home() {
         difficulty={config.difficulty}
         mode={config.mode}
         totalQuestions={config.totalQuestions}
+        language={config.language}
         onBack={handleHome}
         onComplete={handleComplete}
       />
@@ -107,6 +110,7 @@ export default function Home() {
         role={config.role}
         difficulty={config.difficulty}
         transcript={transcript}
+        language={config.language}
         onRestart={handleRestart}
         onHome={handleHome}
       />

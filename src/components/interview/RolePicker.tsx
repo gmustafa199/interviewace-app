@@ -8,12 +8,19 @@ import {
   ROLES,
   IT_ROLES,
   INDIAN_EXAM_ROLES,
-  DIFFICULTY_LEVELS,
-  EXAM_DEPTH_LEVELS,
-  INTERVIEW_MODES,
   type Role,
   type Domain,
 } from '@/lib/roles';
+import {
+  LANGUAGES,
+  UI_STRINGS,
+  DIFFICULTY_LEVELS_I18N,
+  EXAM_DEPTH_LEVELS_I18N,
+  INTERVIEW_MODES_I18N,
+  LENGTH_OPTIONS_I18N,
+  roleTitleHi,
+  type Language,
+} from '@/lib/i18n';
 import {
   ArrowLeft,
   ArrowRight,
@@ -59,6 +66,7 @@ type Props = {
     difficulty: string;
     mode: string;
     totalQuestions: number;
+    language: Language;
   }) => void;
 };
 
@@ -73,6 +81,9 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
   const [difficulty, setDifficulty] = useState('mid');
   const [mode, setMode] = useState('text');
   const [questionCount, setQuestionCount] = useState(8);
+  const [language, setLanguage] = useState<Language>('en');
+
+  const strings = UI_STRINGS[language];
 
   const rolesToShow = useMemo(
     () => (activeDomain === 'IT' ? IT_ROLES : INDIAN_EXAM_ROLES),
@@ -80,7 +91,13 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
   );
 
   const difficultyOptions =
-    activeDomain === 'IT' ? DIFFICULTY_LEVELS : EXAM_DEPTH_LEVELS;
+    activeDomain === 'IT' ? DIFFICULTY_LEVELS_I18N[language] : EXAM_DEPTH_LEVELS_I18N[language];
+  const modeOptions = INTERVIEW_MODES_I18N[language];
+  const lengthOptions = LENGTH_OPTIONS_I18N[language];
+
+  function roleTitle(role: Role): string {
+    return language === 'hi' ? roleTitleHi(role.id) : role.title;
+  }
 
   const handleSelectRole = (role: Role) => {
     setSelectedRole(role);
@@ -99,7 +116,7 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
         <div className="mb-8 flex items-center justify-between">
           <Button variant="ghost" onClick={onBack}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
+            {strings.backToHome}
           </Button>
           <Badge variant="outline">
             <Clock className="mr-1 h-3 w-3" />
@@ -110,19 +127,38 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
         </div>
 
         <h1 className="mb-2 text-3xl font-bold tracking-tight">
-          Set up your mock interview
+          {strings.setupTitle}
         </h1>
         <p className="mb-8 text-muted-foreground">
-          Pick a role, choose difficulty, and start. The AI will handle the rest.
+          {strings.setupSubtitle}
         </p>
 
         {/* Step 1: Domain tabs + Role grid */}
         <div className="mb-10">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-              1
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                1
+              </div>
+              <h2 className="text-xl font-semibold">{strings.step1}</h2>
             </div>
-            <h2 className="text-xl font-semibold">Choose your interview type</h2>
+
+            {/* Language selector */}
+            <div className="inline-flex rounded-lg border bg-muted p-1">
+              {LANGUAGES.map((l) => (
+                <button
+                  key={l.id}
+                  onClick={() => setLanguage(l.id)}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                    language === l.id
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {l.nativeLabel}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Domain tabs */}
@@ -136,7 +172,7 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
               }`}
             >
               <Code2 className="h-4 w-4" />
-              IT Jobs
+              {strings.itJobs}
               <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
                 {IT_ROLES.length}
               </span>
@@ -150,7 +186,7 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
               }`}
             >
               <Landmark className="h-4 w-4" />
-              Indian Competitive Exams
+              {strings.indianExams}
               <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
                 {INDIAN_EXAM_ROLES.length}
               </span>
@@ -193,7 +229,7 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
                       )}
                     </div>
                   </div>
-                  <h3 className="text-sm font-semibold">{role.title}</h3>
+                  <h3 className="text-sm font-semibold">{roleTitle(role)}</h3>
                   <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                     {role.description}
                   </p>
@@ -232,7 +268,7 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
               2
             </div>
             <h2 className="text-xl font-semibold">
-              {activeDomain === 'IT' ? 'Pick difficulty' : 'Pick interview depth'}
+              {activeDomain === 'IT' ? strings.step2IT : strings.step2Exam}
             </h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -269,10 +305,10 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
               3
             </div>
-            <h2 className="text-xl font-semibold">Pick mode</h2>
+            <h2 className="text-xl font-semibold">{strings.step3}</h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {INTERVIEW_MODES.map((m) => {
+            {modeOptions.map((m) => {
               const Icon = ICONS[m.icon] || MessageSquare;
               const isSelected = mode === m.id;
               const isPro = (m as any).pro;
@@ -317,14 +353,10 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
               4
             </div>
-            <h2 className="text-xl font-semibold">Interview length</h2>
+            <h2 className="text-xl font-semibold">{strings.interviewLength}</h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            {[
-              { count: 5, label: 'Quick', time: '~8 min' },
-              { count: 8, label: 'Standard', time: '~15 min' },
-              { count: 12, label: 'Deep', time: '~25 min' },
-            ].map((opt) => {
+            {lengthOptions.map((opt) => {
               const isSelected = questionCount === opt.count;
               return (
                 <Card
@@ -338,7 +370,7 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
                 >
                   <div className="mb-1 flex items-center justify-between">
                     <h3 className="font-semibold">
-                      {opt.count} questions
+                      {opt.count} {strings.questions}
                     </h3>
                     {isSelected && (
                       <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -358,14 +390,14 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
           <div className="text-sm text-muted-foreground">
             {selectedRole ? (
               <span>
-                Ready to practice:{' '}
+                {strings.readyToPractice}{' '}
                 <span className="font-medium text-foreground">
-                  {selectedRole.title}
+                  {roleTitle(selectedRole)}
                 </span>{' '}
-                · {difficulty} · {questionCount} questions
+                · {difficulty} · {questionCount} {strings.questions}
               </span>
             ) : (
-              <span>Please pick a role to continue</span>
+              <span>{strings.pickRoleToContinue}</span>
             )}
           </div>
           <Button
@@ -378,10 +410,11 @@ export function RolePicker({ initialRoleId, onBack, onStart }: Props) {
                 difficulty,
                 mode,
                 totalQuestions: questionCount,
+                language,
               })
             }
           >
-            Start Interview
+            {strings.startInterview}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unifiedChat } from '@/lib/ai';
 import { getRoleById, type Role } from '@/lib/roles';
+import { languageInstructions, type Language } from '@/lib/hindi-prompts';
 
 export const runtime = 'nodejs';
 export const maxDuration = 90; // Vercel Hobby=60, Pro=300. 90s gives retry logic headroom.
@@ -16,6 +17,7 @@ type RequestBody = {
   messages: Message[];
   questionNumber: number;
   totalQuestions: number;
+  language?: Language;
 };
 
 /* ------------------------------------------------------------------ */
@@ -146,12 +148,16 @@ function buildInstructions(
   role: Role,
   difficulty: string,
   questionNumber: number,
-  totalQuestions: number
+  totalQuestions: number,
+  language: Language = 'en'
 ): string {
-  if (role.domain === 'IndianExam') {
-    return buildExamInstructions(role, difficulty, questionNumber, totalQuestions);
-  }
-  return buildITInstructions(role, difficulty, questionNumber, totalQuestions);
+  const base =
+    role.domain === 'IndianExam'
+      ? buildExamInstructions(role, difficulty, questionNumber, totalQuestions)
+      : buildITInstructions(role, difficulty, questionNumber, totalQuestions);
+
+  const langBlock = languageInstructions(language, role.id);
+  return langBlock ? `${base}\n\n${langBlock}` : base;
 }
 
 /* ------------------------------------------------------------------ */
@@ -161,7 +167,7 @@ function buildInstructions(
 export async function POST(req: NextRequest) {
   try {
     const body: RequestBody = await req.json();
-    const { role, difficulty, messages, questionNumber, totalQuestions } = body;
+    const { role, difficulty, messages, questionNumber, totalQuestions, language } = body;
 
     if (!role) {
       return NextResponse.json(
@@ -179,7 +185,8 @@ export async function POST(req: NextRequest) {
       roleInfo,
       difficulty || 'mid',
       questionNumber || 1,
-      totalQuestions || 8
+      totalQuestions || 8,
+      language || 'en'
     );
 
     // Filter history (drop system + empty messages)

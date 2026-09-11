@@ -24,6 +24,7 @@ import {
   Users,
 } from 'lucide-react';
 import type { Role } from '@/lib/roles';
+import { UI_STRINGS, roleTitleHi, speechLang, type Language } from '@/lib/i18n';
 
 type Message = {
   role: 'user' | 'assistant' | 'system';
@@ -35,6 +36,7 @@ type Props = {
   difficulty: string;
   mode: string; // 'text' | 'voice'
   totalQuestions: number;
+  language: Language;
   onBack: () => void;
   onComplete: (transcript: Message[]) => void;
 };
@@ -140,11 +142,13 @@ export function InterviewChat({
   difficulty,
   mode,
   totalQuestions,
+  language,
   onBack,
   onComplete,
 }: Props) {
   const isVoice = mode === 'voice';
   const isExam = role.domain === 'IndianExam';
+  const strings = UI_STRINGS[language];
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -315,13 +319,24 @@ export function InterviewChat({
       utter.rate = rate;
       utter.pitch = 1.0;
       utter.volume = 1.0;
-      utter.lang = 'en-IN'; // Indian English (falls back to en-US)
+      utter.lang = speechLang(language); // 'hi-IN' for Hindi, 'en-IN' for English
 
-      // Try to pick an Indian English voice if available
+      // Voice picking strategy: prefer high-quality Google voices in the
+      // right language; they sound much more human than the default OS voice.
       const voices = window.speechSynthesis.getVoices();
+      const targetLang = speechLang(language);
+      const baseLang = targetLang.split('-')[0]; // 'hi' or 'en'
+
       const preferredVoice =
-        voices.find((v) => v.lang === 'en-IN') ||
-        voices.find((v) => v.lang.startsWith('en')) ||
+        // 1. Google brand voice in exact lang (Chrome ships these — best quality)
+        voices.find((v) => v.name.includes('Google') && v.lang === targetLang) ||
+        // 2. Any voice with exact lang match
+        voices.find((v) => v.lang === targetLang) ||
+        // 3. Google voice in same base language
+        voices.find((v) => v.name.includes('Google') && v.lang.startsWith(baseLang)) ||
+        // 4. Any voice in same base language
+        voices.find((v) => v.lang.startsWith(baseLang)) ||
+        // 5. Whatever exists
         voices[0];
       if (preferredVoice) utter.voice = preferredVoice;
 
@@ -379,6 +394,7 @@ export function InterviewChat({
           messages: history,
           questionNumber: questionNumberRef.current,
           totalQuestions,
+          language,
         }),
       });
       if (!res.ok) {
@@ -424,7 +440,7 @@ export function InterviewChat({
     if (SpeechRecognition) {
       try {
         const recognition = new SpeechRecognition();
-        recognition.lang = 'en-IN'; // Indian English (falls back to en-US)
+        recognition.lang = speechLang(language); // 'hi-IN' for Hindi, 'en-IN' for English
         recognition.continuous = true;
         recognition.interimResults = true;
 
@@ -599,7 +615,7 @@ export function InterviewChat({
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="sm" onClick={() => { stopPlayback(); onBack(); }}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Exit
+              {strings.exit}
             </Button>
             <div className="flex items-center gap-3">
               {isVoice && (
@@ -608,16 +624,16 @@ export function InterviewChat({
                     <>
                       <SpeakingWaveform />
                       <span className="ml-2 text-xs">
-                        Speaking {currentChunkIdx}/{totalChunks}
+                        {strings.speaking} {currentChunkIdx}/{totalChunks}
                       </span>
                     </>
                   ) : isPaused ? (
                     <>
-                      <Pause className="mr-1 h-3 w-3" /> Paused
+                      <Pause className="mr-1 h-3 w-3" /> {strings.paused}
                     </>
                   ) : (
                     <>
-                      <Mic className="mr-1 h-3 w-3" /> Voice Mode
+                      <Mic className="mr-1 h-3 w-3" /> {strings.voiceMode}
                     </>
                   )}
                 </Badge>
@@ -625,13 +641,13 @@ export function InterviewChat({
               {!isVoice && (
                 <Badge variant="outline" className="hidden sm:flex">
                   <Bot className="mr-1 h-3 w-3" />
-                  AI Interviewer
+                  {strings.aiInterviewer}
                 </Badge>
               )}
               {isExam && role.panelSize && (
                 <Badge variant="outline" className="hidden sm:flex">
                   <Users className="mr-1 h-3 w-3" />
-                  {role.panelSize}-member panel
+                  {role.panelSize}-{strings.memberPanel}
                 </Badge>
               )}
               <Badge variant="secondary">
@@ -727,16 +743,16 @@ export function InterviewChat({
                         {isAiSpeakingThis ? (
                           isPaused ? (
                             <>
-                              <Volume2 className="mr-1 h-3 w-3" /> Resume
+                              <Volume2 className="mr-1 h-3 w-3" /> {strings.resume}
                             </>
                           ) : (
                             <>
-                              <Pause className="mr-1 h-3 w-3" /> Pause
+                              <Pause className="mr-1 h-3 w-3" /> {strings.pause}
                             </>
                           )
                         ) : (
                           <>
-                            <Volume2 className="mr-1 h-3 w-3" /> Replay
+                            <Volume2 className="mr-1 h-3 w-3" /> {strings.replay}
                           </>
                         )}
                       </Button>
@@ -747,7 +763,7 @@ export function InterviewChat({
                           className="h-7 px-2 text-xs"
                           onClick={stopPlayback}
                         >
-                          <VolumeX className="mr-1 h-3 w-3" /> Stop
+                          <VolumeX className="mr-1 h-3 w-3" /> {strings.stop}
                         </Button>
                       )}
                     </div>
@@ -780,7 +796,7 @@ export function InterviewChat({
                     className="mt-2"
                     onClick={() => askNextQuestion(messagesRef.current)}
                   >
-                    Try Again
+                    {strings.tryAgain}
                   </Button>
                 </div>
               </div>
@@ -802,10 +818,10 @@ export function InterviewChat({
                 <Sparkles className="h-5 w-5 text-primary" />
                 <div>
                   <p className="text-sm font-medium">
-                    Interview complete! Generating your scorecard...
+                    {strings.interviewComplete}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    This takes about 20-30 seconds.
+                    {strings.generatingWait}
                   </p>
                 </div>
               </div>
@@ -828,16 +844,16 @@ export function InterviewChat({
               >
                 {isRecording ? (
                   <>
-                    <Square className="mr-2 h-4 w-4" /> Stop Recording
+                    <Square className="mr-2 h-4 w-4" /> {strings.stopRecording}
                   </>
                 ) : isTranscribing ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Transcribing...
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {strings.transcribing}
                   </>
                 ) : (
                   <>
                     <Mic className="mr-2 h-4 w-4" />
-                    {input ? 'Record More' : 'Hold to Speak'}
+                    {input ? strings.recordMore : strings.holdToSpeak}
                   </>
                 )}
               </Button>
@@ -847,7 +863,7 @@ export function InterviewChat({
                 onClick={() => setAutoPlay(!autoPlay)}
                 className="rounded-full text-xs"
               >
-                {autoPlay ? 'Auto-play: On' : 'Auto-play: Off'}
+                {autoPlay ? strings.autoPlayOn : strings.autoPlayOff}
               </Button>
             </div>
           )}
@@ -859,8 +875,8 @@ export function InterviewChat({
               onKeyDown={handleKeyDown}
               placeholder={
                 isVoice
-                  ? 'Your transcribed answer will appear here. Edit if needed, then send.'
-                  : 'Type your answer here... (Cmd/Ctrl+Enter to send)'
+                  ? strings.voicePlaceholder
+                  : `${strings.typePlaceholder} ${strings.cmdEnter}`
               }
               className="min-h-[60px] max-h-[160px] resize-none"
               disabled={isLoading || isFinishing}
@@ -893,10 +909,10 @@ export function InterviewChat({
           </div>
           <p className="mt-2 text-center text-xs text-muted-foreground">
             {isVoice
-              ? 'Click "Hold to Speak", answer out loud, then review and send.'
+              ? strings.voiceHint
               : questionNumber < totalQuestions
-              ? 'Answer the question, then send. The interviewer will ask the next one.'
-              : "This is the last question. After your answer, you'll get your scorecard."}
+              ? strings.typeAnswerHint
+              : strings.lastQuestionHint}
           </p>
         </div>
       </footer>

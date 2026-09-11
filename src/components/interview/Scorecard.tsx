@@ -17,6 +17,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import type { Role } from '@/lib/roles';
+import { UI_STRINGS, roleTitleHi, type Language } from '@/lib/i18n';
 
 type Message = {
   role: 'user' | 'assistant' | 'system';
@@ -27,11 +28,13 @@ type Props = {
   role: Role;
   difficulty: string;
   transcript: Message[];
+  language: Language;
   onRestart: () => void;
   onHome: () => void;
 };
 
-export function Scorecard({ role, difficulty, transcript, onRestart, onHome }: Props) {
+export function Scorecard({ role, difficulty, transcript, language, onRestart, onHome }: Props) {
+  const strings = UI_STRINGS[language];
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string>('');
@@ -50,6 +53,7 @@ export function Scorecard({ role, difficulty, transcript, onRestart, onHome }: P
             role: role.id,
             difficulty,
             transcript,
+            language,
           }),
         });
         if (!res.ok) {
@@ -71,17 +75,21 @@ export function Scorecard({ role, difficulty, transcript, onRestart, onHome }: P
     return () => {
       cancelled = true;
     };
-  }, [role.id, difficulty, transcript]);
+  }, [role.id, difficulty, transcript, language]);
 
   const scoreOutOf10 = overallScore !== null ? (overallScore / 10).toFixed(1) : null;
   const passStatus =
     overallScore === null
       ? null
       : overallScore >= 70
-      ? { label: 'Pass', color: 'text-emerald-600', bg: 'bg-emerald-500/10' }
+      ? { label: strings.pass, color: 'text-emerald-600', bg: 'bg-emerald-500/10' }
       : overallScore >= 50
-      ? { label: 'Borderline', color: 'text-amber-600', bg: 'bg-amber-500/10' }
-      : { label: 'Needs Work', color: 'text-rose-600', bg: 'bg-rose-500/10' };
+      ? { label: strings.borderline, color: 'text-amber-600', bg: 'bg-amber-500/10' }
+      : { label: strings.needsWork, color: 'text-rose-600', bg: 'bg-rose-500/10' };
+
+  function displayRoleTitle(): string {
+    return language === 'hi' ? roleTitleHi(role.id) : role.title;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -92,10 +100,10 @@ export function Scorecard({ role, difficulty, transcript, onRestart, onHome }: P
             <Trophy className="h-7 w-7" />
           </div>
           <h1 className="mb-2 text-3xl font-bold tracking-tight">
-            Your Interview Scorecard
+            {strings.overallScore}
           </h1>
           <p className="text-muted-foreground">
-            {role.title} · {difficulty} level · {transcript.filter((m) => m.role === 'user').length} answers
+            {displayRoleTitle()} · {difficulty} · {transcript.filter((m) => m.role === 'user').length} {strings.questions === 'प्रश्न' ? 'उत्तर' : 'answers'}
           </p>
         </div>
 
@@ -222,11 +230,11 @@ export function Scorecard({ role, difficulty, transcript, onRestart, onHome }: P
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-between">
               <Button variant="outline" onClick={onHome}>
                 <Home className="mr-2 h-4 w-4" />
-                Back to Home
+                {strings.backToHome}
               </Button>
               <Button onClick={onRestart}>
                 <RotateCcw className="mr-2 h-4 w-4" />
-                Practice Again
+                {strings.practiceAgain}
               </Button>
             </div>
 
