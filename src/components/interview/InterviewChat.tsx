@@ -690,10 +690,18 @@ export function InterviewChat({
             return (
               <div
                 key={i}
-                className={`mb-6 flex gap-3 ${
+                className={`chat-msg mb-6 flex gap-3 ${
                   msg.role === 'user' ? 'flex-row-reverse' : ''
                 }`}
+                style={{ animationDelay: `${Math.min(i * 60, 400)}ms` }}
               >
+                <style>{`
+                  @keyframes chat-enter {
+                    from { opacity: 0; transform: translateY(8px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                  }
+                  .chat-msg { animation: chat-enter 0.35s ease-out backwards; }
+                `}</style>
                 <div className="flex flex-col items-center gap-1">
                   <div
                     className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${

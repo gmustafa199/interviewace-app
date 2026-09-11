@@ -141,27 +141,50 @@ export function Scorecard({ role, difficulty, transcript, language, onRestart, o
 
         {!loading && !error && (
           <>
-            {/* Score hero */}
+            {/* Score hero with animated ring */}
             {overallScore !== null && passStatus && (
               <Card className={`mb-6 overflow-hidden ${passStatus.bg}`}>
-                <div className="p-6 text-center">
-                  <div className="mb-2 text-sm font-medium text-muted-foreground">
-                    Overall Score
+                <div className="flex flex-col items-center p-8">
+                  <div className="relative h-40 w-40">
+                    {/* SVG score ring */}
+                    <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120">
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="52"
+                        fill="none"
+                        strokeWidth="10"
+                        className="stroke-muted"
+                      />
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="52"
+                        fill="none"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        className={`${passStatus.color} transition-all duration-1000 ease-out`}
+                        stroke="currentColor"
+                        strokeDasharray={`${2 * Math.PI * 52}`}
+                        strokeDashoffset={`${2 * Math.PI * 52 * (1 - overallScore / 100)}`}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className={`text-4xl font-bold ${passStatus.color}`}>
+                        {scoreOutOf10}
+                      </span>
+                      <span className="text-sm text-muted-foreground">/ 10</span>
+                    </div>
                   </div>
-                  <div className={`text-5xl font-bold ${passStatus.color}`}>
-                    {scoreOutOf10}
-                    <span className="text-2xl text-muted-foreground">/10</span>
+                  <div className="mb-1 mt-4 text-sm font-medium text-muted-foreground">
+                    {strings.overallScore}
                   </div>
                   <Badge
                     variant="secondary"
-                    className={`mt-3 ${passStatus.bg} ${passStatus.color} border-0`}
+                    className={`${passStatus.bg} ${passStatus.color} border-0`}
                   >
                     {passStatus.label}
                   </Badge>
-                  <Progress
-                    value={overallScore}
-                    className="mt-4 h-2"
-                  />
                 </div>
               </Card>
             )}
