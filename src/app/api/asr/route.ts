@@ -3,7 +3,7 @@
  * an error and the client falls back to browser Web Speech API.
  *
  * Browser fallback: the client uses webkitSpeechRecognition (Chrome/Edge)
- * which is free and supports Indian English + Hindi.
+ * which is free and understands Indian English (en-IN) well.
  *
  * To enable server-side ASR later: set ZAI_API_KEY or GOOGLE_ASR_KEY.
  */

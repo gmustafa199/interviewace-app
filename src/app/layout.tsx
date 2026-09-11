@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "InterviewAce — AI Mock Interviews for Tech Jobs",
-  description: "Practice real tech interviews with an AI interviewer. 8 IT roles, honest scorecards, sample better answers, and a 7-day practice plan. Free to start.",
-  keywords: ["mock interview", "interview prep", "tech interview", "software engineer interview", "AI interviewer", "interview practice"],
+  title: "InterviewAce — AI Mock Interviews for IT Jobs & Indian Exams",
+  description: "Practice real interviews with a natural AI interviewer. 8 IT roles + 5 Indian exams (UPSC, IBPS, SBI, CAT, RBI). Voice or text, honest scorecards, and progress tracking. Free to start.",
+  keywords: ["mock interview", "interview prep", "tech interview", "software engineer interview", "UPSC interview", "IBPS PO interview", "AI interviewer", "interview practice"],
   authors: [{ name: "InterviewAce" }],
   manifest: "/manifest.json",
   applicationName: "InterviewAce",

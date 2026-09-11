@@ -1,47 +1,140 @@
 /**
- * TTS endpoint — converts text to speech and returns MP3 audio.
+ * TTS endpoint — returns natural, human-sounding MP3 audio.
  *
- * Provider priority:
- *   1. Z.ai SDK if ZAI_API_KEY is set (returns audio/wav)
- *   2. Google Translate TTS (free, no key required, decent quality)
- *      → Falls back to browser Web Speech API on failure
- *   3. Browser Web Speech API (last resort, robotic but works offline)
+ * Provider chain (tries top → bottom):
+ *   1. Microsoft Edge NEURAL voices via edge-tts-node (no API key needed)
+ *      → These are true Azure neural voices (en-IN-NeerjaNeural etc.) and
+ *        sound dramatically more human than anything else available free.
+ *      → Per-speaker voice assignment: panel members get distinct voices.
+ *      → Prosody tuning: measured pace, questions slow slightly, panel
+ *        members vary in pitch — mimics a real interview board.
+ *   2. Google Translate TTS (free, decent, slightly flat)
+ *   3. Browser Web Speech API signal (last resort, robotic)
  *
- * WHY GOOGLE TRANSLATE TTS AS DEFAULT:
- * - Free, no API key, no signup
- * - Much more natural than browser SpeechSynthesis (which sounds robotic)
- * - Works server-side so client gets real audio (not browser-dependent)
- * - Caveat: it's an unofficial endpoint — can rate-limit or break
- *   For production: use OpenAI TTS, ElevenLabs, or Google Cloud TTS
- *
- * TO UPGRADE TO PRODUCTION TTS LATER:
- *   - OpenAI: set OPENAI_API_KEY → use /v1/audio/speech (~$0.015/1k chars)
- *   - ElevenLabs: set ELEVENLABS_API_KEY → free 10k chars/month
- *   - Google Cloud TTS: set GOOGLE_TTS_KEY → 4M chars/month free
+ * OPTIONAL upgrade later (paid, best-in-class):
+ *   - ElevenLabs (ELEVENLABS_API_KEY) or OpenAI TTS (OPENAI_API_KEY)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getZAI } from '@/lib/zai';
+import { MsEdgeTTS, OUTPUT_FORMAT } from 'edge-tts-node';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 type RequestBody = {
   text: string;
-  voice?: string;
+  speaker?: string | null;
   speed?: number;
 };
 
 /* ------------------------------------------------------------------ */
-/* Google Translate TTS (free, no key)                                */
+/* Voice assignment — different panelists get different neural voices */
+/* ------------------------------------------------------------------ */
+
+const VOICE_FEMALE = 'en-IN-NeerjaNeural'; // warm, professional female (India)
+const VOICE_MALE = 'en-IN-PrabhatNeural'; // measured, authoritative male (India)
+
+function pickVoice(speaker?: string | null): string {
+  if (!speaker) return VOICE_FEMALE; // single IT interviewer — default
+  const s = speaker.toLowerCase();
+  if (s.includes('chairman')) return VOICE_MALE; // UPSC-style chairman
+  const memberMatch = s.match(/(\d+)/);
+  if (memberMatch) {
+    // Alternate voices across panel members: odd → male, even → female
+    return parseInt(memberMatch[1], 10) % 2 === 1 ? VOICE_MALE : VOICE_FEMALE;
+  }
+  if (s.includes('interviewer') || s.includes('panelist')) return VOICE_MALE;
+  return VOICE_FEMALE;
+}
+
+/** Per-speaker pitch offset so two same-gender voices still differ. */
+function pickPitch(speaker?: string | null): string {
+  if (!speaker) return '+0Hz';
+  const s = speaker.toLowerCase();
+  if (s.includes('chairman')) return '-2Hz';
+  const memberMatch = s.match(/(\d+)/);
+  if (memberMatch) {
+    const n = parseInt(memberMatch[1], 10);
+    return n % 2 === 1 ? '+1Hz' : '-1Hz';
+  }
+  return '+0Hz';
+}
+
+/**
+ * Prosody — the details that make it sound like a person:
+ * - Interviewers speak measurably slower than default TTS (≈ -8%)
+ * - Questions slow down slightly more (deliberate, probing delivery)
+ * - Very short sentences get a touch more energy
+ */
+function pickRate(text: string, speaker?: string | null): string {
+  const trimmed = text.trim();
+  const isQuestion = /\?\s*$/.test(trimmed);
+  const wordCount = trimmed.split(/\s+/).length;
+
+  let ratePct = -8; // base: measured, senior-professional pace
+  if (isQuestion) ratePct -= 2; // probing questions land slower
+  if (wordCount <= 6) ratePct += 3; // short lines: natural lift
+  if (wordCount > 28) ratePct += 2; // long sentences: avoid dragging
+
+  // Male voices read a touch faster at same rate setting
+  if (pickVoice(speaker) === VOICE_MALE) ratePct += 1;
+
+  const clamped = Math.max(-15, Math.min(5, ratePct));
+  return `${clamped >= 0 ? '+' : ''}${clamped}%`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Provider 1 — Microsoft Edge neural voices                          */
+/* ------------------------------------------------------------------ */
+
+async function synthesizeWithEdge(
+  text: string,
+  speaker?: string | null
+): Promise<Buffer | null> {
+  const tts = new MsEdgeTTS({ enableLogger: false });
+  try {
+    await tts.setMetadata(
+      pickVoice(speaker),
+      OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3
+    );
+
+    const stream = tts.toStream(text, {
+      rate: pickRate(text, speaker),
+      pitch: pickPitch(speaker),
+    });
+
+    const chunks: Buffer[] = [];
+    const collectDone = new Promise<Buffer>((resolve, reject) => {
+      stream.on('data', (c: Buffer) => chunks.push(c));
+      stream.on('end', () => resolve(Buffer.concat(chunks)));
+      stream.on('error', reject);
+    });
+
+    // Hard timeout — never let a stalled websocket exceed 12s
+    const timeout = new Promise<null>((resolve) =>
+      setTimeout(() => resolve(null), 12000)
+    );
+
+    const buffer = await Promise.race([collectDone, timeout]);
+    if (!buffer || buffer.length < 1000) return null;
+    return buffer;
+  } catch {
+    return null;
+  } finally {
+    try {
+      tts.close();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Provider 2 — Google Translate TTS (free fallback)                  */
 /* ------------------------------------------------------------------ */
 
 const GTTTS_ENDPOINT = 'https://translate.google.com/translate_tts';
 
-/**
- * Split text into chunks of <=190 chars on sentence boundaries.
- * Google Translate TTS rejects requests longer than ~200 chars.
- */
 function chunkForGoogleTTS(text: string): string[] {
   const cleaned = text.replace(/\s+/g, ' ').trim();
   if (cleaned.length <= 190) return [cleaned];
@@ -61,7 +154,6 @@ function chunkForGoogleTTS(text: string): string[] {
       if (trimmed.length <= 190) {
         current = trimmed;
       } else {
-        // Hard split very long sentences on word boundaries
         const words = trimmed.split(' ');
         let buf = '';
         for (const w of words) {
@@ -89,7 +181,7 @@ async function fetchGoogleTTS(text: string): Promise<Buffer | null> {
   for (const chunk of chunks) {
     const url = `${GTTTS_ENDPOINT}?ie=UTF-8&q=${encodeURIComponent(chunk)}&tl=en&client=tw-ob`;
     const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 12000);
+    const timeout = setTimeout(() => ctrl.abort(), 10000);
 
     try {
       const res = await fetch(url, {
@@ -103,10 +195,7 @@ async function fetchGoogleTTS(text: string): Promise<Buffer | null> {
       });
       clearTimeout(timeout);
 
-      if (!res.ok) {
-        // Google rate-limited or blocked — bail and let caller fall back.
-        return null;
-      }
+      if (!res.ok) return null;
       const ct = res.headers.get('content-type') || '';
       if (!ct.startsWith('audio/')) return null;
 
@@ -121,7 +210,6 @@ async function fetchGoogleTTS(text: string): Promise<Buffer | null> {
   }
 
   if (buffers.length === 0) return null;
-  // MP3 streams can be safely byte-concatenated for sequential playback.
   return Buffer.concat(buffers);
 }
 
@@ -132,62 +220,35 @@ async function fetchGoogleTTS(text: string): Promise<Buffer | null> {
 export async function POST(req: NextRequest) {
   try {
     const body: RequestBody = await req.json();
-    const { text, voice, speed } = body;
+    const { speaker, speed } = body;
+    let { text } = body;
 
     if (!text || !text.trim()) {
-      return NextResponse.json(
-        { error: 'Missing text parameter' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 });
     }
 
-    // Strip markdown/labels that don't sound good spoken aloud.
-    let spokenText = text;
-    spokenText = spokenText.replace(/^((Chairman|Member\s*\d*|Interviewer|Panelist)\s*:\s*)/i, '');
-    spokenText = spokenText.replace(/\*\*/g, '');
-    spokenText = spokenText.replace(/^#+\s*/gm, '');
-    spokenText = spokenText.replace(/`([^`]+)`/g, '$1');
+    // Clean text so it sounds natural spoken aloud
+    text = text.replace(/^((Chairman|Member\s*\d*|Interviewer|Panelist)\s*:\s*)/i, '');
+    text = text.replace(/\*\*(.*?)\*\*/g, '$1');
+    text = text.replace(/^#+\s*/gm, '');
+    text = text.replace(/`([^`]+)`/g, '$1');
+    text = text.slice(0, 1200);
 
-    const truncated = spokenText.slice(0, 1500);
-
-    // Check if Z.ai is configured — if so, try Z.ai TTS first.
-    const hasZai = !!process.env.ZAI_API_KEY;
-    if (hasZai) {
-      try {
-        const zai = await getZAI();
-        const response = await zai.audio.tts.create({
-          input: truncated,
-          voice: voice || 'tongtong',
-          speed: typeof speed === 'number' ? speed : 0.92,
-          response_format: 'wav',
-          stream: false,
-        } as any);
-
-        const contentType = (response as any)?.headers?.get?.('content-type') || '';
-        const isAudio = contentType.startsWith('audio/') ||
-                        contentType.startsWith('application/octet-stream');
-        if (isAudio) {
-          const arrayBuffer = await response.arrayBuffer();
-          const buffer = Buffer.from(new Uint8Array(arrayBuffer));
-          if (buffer.length >= 1024) {
-            return new NextResponse(buffer, {
-              status: 200,
-              headers: {
-                'Content-Type': 'audio/wav',
-                'Content-Length': buffer.length.toString(),
-                'Cache-Control': 'no-store',
-              },
-            });
-          }
-        }
-        // else fall through to Google TTS
-      } catch {
-        // fall through to Google TTS
-      }
+    // 1) Edge neural voices — the human-sounding tier
+    const edgeBuffer = await synthesizeWithEdge(text, speaker);
+    if (edgeBuffer) {
+      return new NextResponse(edgeBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': 'audio/mpeg',
+          'Content-Length': edgeBuffer.length.toString(),
+          'Cache-Control': 'no-store',
+        },
+      });
     }
 
-    // Try Google Translate TTS (free, no key) — much more natural than browser TTS.
-    const gttsBuffer = await fetchGoogleTTS(truncated);
+    // 2) Google Translate TTS
+    const gttsBuffer = await fetchGoogleTTS(text);
     if (gttsBuffer && gttsBuffer.length > 1000) {
       return new NextResponse(gttsBuffer, {
         status: 200,
@@ -199,20 +260,19 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Last resort: tell the client to use browser Web Speech API.
+    // 3) Last resort — browser Web Speech API with prosody hints
     return NextResponse.json({
       use_browser_tts: true,
-      text: truncated,
+      text,
       rate: speed || 0.92,
-      pitch: 1.0,
+      pitch: speaker && speaker.toLowerCase().includes('chairman') ? 0.94 : 1.0,
       lang: 'en-IN',
     });
   } catch (err: any) {
     console.error('TTS API error:', err);
-    // On any error, fall back to browser TTS
     return NextResponse.json({
       use_browser_tts: true,
-      text: (await req.json().catch(() => ({}))).text || '',
+      text: '',
       rate: 0.92,
       lang: 'en-IN',
       error: err?.message,

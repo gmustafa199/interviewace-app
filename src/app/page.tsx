@@ -6,7 +6,6 @@ import { RolePicker } from '@/components/interview/RolePicker';
 import { InterviewChat } from '@/components/interview/InterviewChat';
 import { Scorecard } from '@/components/interview/Scorecard';
 import type { Role } from '@/lib/roles';
-import type { Language } from '@/lib/i18n';
 
 type View = 'landing' | 'setup' | 'interview' | 'scorecard';
 
@@ -20,13 +19,13 @@ type InterviewConfig = {
   difficulty: string;
   mode: string;
   totalQuestions: number;
-  language: Language;
 };
 
 export default function Home() {
   const [view, setView] = useState<View>('landing');
   const [config, setConfig] = useState<InterviewConfig | null>(null);
   const [transcript, setTranscript] = useState<Message[]>([]);
+  const [interviewDurationSec, setInterviewDurationSec] = useState(0);
   const [pendingRoleId, setPendingRoleId] = useState<string | undefined>();
 
   function handleStartFromLanding() {
@@ -47,8 +46,9 @@ export default function Home() {
     window.scrollTo(0, 0);
   }
 
-  function handleComplete(messages: Message[]) {
+  function handleComplete(messages: Message[], durationSec: number) {
     setTranscript(messages);
+    setInterviewDurationSec(durationSec);
     setView('scorecard');
     window.scrollTo(0, 0);
   }
@@ -97,7 +97,6 @@ export default function Home() {
         difficulty={config.difficulty}
         mode={config.mode}
         totalQuestions={config.totalQuestions}
-        language={config.language}
         onBack={handleHome}
         onComplete={handleComplete}
       />
@@ -109,8 +108,10 @@ export default function Home() {
       <Scorecard
         role={config.role}
         difficulty={config.difficulty}
+        mode={config.mode}
+        questionCount={config.totalQuestions}
         transcript={transcript}
-        language={config.language}
+        durationSec={interviewDurationSec}
         onRestart={handleRestart}
         onHome={handleHome}
       />

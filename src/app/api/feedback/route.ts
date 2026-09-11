@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unifiedChat } from '@/lib/ai';
 import { getRoleById, type ScoringDimension } from '@/lib/roles';
-import { scorecardLanguageInstructions, DIMENSION_LABELS_HI, type Language } from '@/lib/hindi-prompts';
+import type { DimensionScore } from '@/lib/progress';
 
 export const runtime = 'nodejs';
 export const maxDuration = 90;
@@ -15,13 +15,9 @@ type RequestBody = {
   role: string;
   difficulty: string;
   transcript: Message[];
-  language?: Language;
 };
 
-function buildScorecardSection(
-  dimensions: ScoringDimension[] | undefined,
-  language: Language = 'en'
-): string {
+function buildScorecardSection(dimensions: ScoringDimension[] | undefined): string {
   if (!dimensions || dimensions.length === 0) {
     return `## Scores by Category
 - **Communication**: X/10 — one line why
@@ -30,12 +26,9 @@ function buildScorecardSection(
 - **Behavioral / Culture Fit**: X/10 — one line why
 - **Confidence & Clarity**: X/10 — one line why`;
   }
-  const lines = dimensions.map((d) => {
-    const label = language === 'hi'
-      ? DIMENSION_LABELS_HI[d.key] || d.label
-      : d.label;
-    return `- **${label}**: X/10 — one line why (${d.description})`;
-  });
+  const lines = dimensions.map(
+    (d) => `- **${d.label}**: X/10 — one line why (${d.description})`
+  );
   return `## Scores by Category\n${lines.join('\n')}`;
 }
 
@@ -97,7 +90,7 @@ ${transcriptStr}
 export async function POST(req: NextRequest) {
   try {
     const body: RequestBody = await req.json();
-    const { role, difficulty, transcript, language } = body;
+    const { role, difficulty, transcript } = body;
 
     if (!role || !transcript || transcript.length === 0) {
       return NextResponse.json(
@@ -119,7 +112,7 @@ export async function POST(req: NextRequest) {
       })
       .join('\n\n');
 
-    const scoringSection = buildScorecardSection(roleInfo.scoringDimensions, language || 'en');
+    const scoringSection = buildScorecardSection(roleInfo.scoringDimensions);
     const isExam = roleInfo.domain === 'IndianExam';
 
     const userTurn = buildPrompt(
@@ -131,30 +124,39 @@ export async function POST(req: NextRequest) {
       isExam
     );
 
-    const langBlock = scorecardLanguageInstructions(language || 'en');
-    const finalPrompt = langBlock ? `${userTurn}\n\n${langBlock}` : userTurn;
-
     const completion = await unifiedChat({
-      messages: [{ role: 'user', content: finalPrompt }],
+      messages: [{ role: 'user', content: userTurn }],
       temperature: 0.4,
       max_tokens: 2000,
     });
 
     const feedback = completion.choices[0]?.message?.content || '';
 
-    // Try to extract overall score (0-10) — supports both English and Hindi formats
+    // Extract overall score (0-10 → return as 0-100)
     let overallScore: number | null = null;
-    const scoreMatch =
-      feedback.match(/Overall Score:\s*(\d+(?:\.\d+)?)\s*\/\s*10/i) ||
-      feedback.match(/कुल स्कोर:\s*(\d+(?:\.\d+)?)\s*\/\s*10/);
+    const scoreMatch = feedback.match(/Overall Score:\s*(\d+(?:\.\d+)?)\s*\/\s*10/i);
     if (scoreMatch) {
       const parsed = parseFloat(scoreMatch[1]);
       overallScore = Math.round(parsed * 10);
     }
 
+    // Extract per-dimension scores ("- **Communication**: 7/10 — reason")
+    const dimensionScores: DimensionScore[] = [];
+    const dimRe = /^-\s*\*\*(.+?)\*\*:\s*(\d+(?:\.\d+)?)\s*\/\s*10/gm;
+    let m: RegExpExecArray | null;
+    while ((m = dimRe.exec(feedback)) !== null) {
+      const label = m[1].trim();
+      const score = Math.min(10, Math.max(0, parseFloat(m[2])));
+      const key =
+        roleInfo.scoringDimensions?.find((d) => d.label === label)?.key ||
+        label.toLowerCase().replace(/[^a-z]+/g, '_');
+      dimensionScores.push({ key, label, score });
+    }
+
     return NextResponse.json({
       feedback,
       overallScore,
+      dimensionScores,
     });
   } catch (err: any) {
     console.error('Feedback API error:', err);
