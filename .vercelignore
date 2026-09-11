@@ -1,0 +1,17 @@
+# Keep secrets and local build artifacts out of Vercel deployments
+twa/
+scripts/
+db/
+download/
+upload/
+mini-services/
+examples/
+skills/
+tests/
+play-store-listing.md
+PLAY_STORE_SUBMISSION.md
+worklog.md
+dev.log
+*.keystore
+*.aab
+*.apk

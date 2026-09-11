@@ -1,11 +1,9 @@
 {
-  "$schema": "https://json-schema.org/",
   "packageId": "com.interviewace.app",
   "host": "interviewace.umprintables.com",
   "name": "InterviewAce",
   "launcherName": "InterviewAce",
   "display": "standalone",
-  "orientation": "default",
   "themeColor": "#0F172A",
   "themeColorDark": "#0F172A",
   "navigationColor": "#0F172A",
@@ -20,28 +18,52 @@
   "monochromeIconUrl": "https://interviewace.umprintables.com/icons/icon-mono-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": "./android.keystore",
+    "path": "/home/z/my-project/twa/android.keystore",
     "alias": "android"
   },
-  "appVersionName": "1.0.0",
   "appVersionCode": 1,
   "shortcuts": [
-    { "name": "Frontend Interview", "shortName": "Frontend", "url": "/?role=frontend&utm_source=shortcut" },
-    { "name": "SWE Interview",      "shortName": "SWE",      "url": "/?role=swe&utm_source=shortcut" },
-    { "name": "Data Scientist",     "shortName": "Data Sci", "url": "/?role=data-scientist&utm_source=shortcut" }
+    {
+      "name": "Frontend Interview",
+      "shortName": "Frontend",
+      "url": "https://interviewace.umprintables.com/?role=frontend&utm_source=shortcut",
+      "chosenIconUrl": "https://interviewace.umprintables.com/icons/icon-192.png"
+    },
+    {
+      "name": "SWE Interview",
+      "shortName": "SWE",
+      "url": "https://interviewace.umprintables.com/?role=swe&utm_source=shortcut",
+      "chosenIconUrl": "https://interviewace.umprintables.com/icons/icon-192.png"
+    },
+    {
+      "name": "Data Scientist",
+      "shortName": "Data Sci",
+      "url": "https://interviewace.umprintables.com/?role=data-scientist&utm_source=shortcut",
+      "chosenIconUrl": "https://interviewace.umprintables.com/icons/icon-192.png"
+    }
   ],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://interviewace.umprintables.com/manifest.json",
   "fallbackType": "customtabs",
   "features": {
-    "locationDelegation": { "enabled": false },
-    "playBilling": { "enabled": true }
+    "locationDelegation": {
+      "enabled": false
+    },
+    "playBilling": {
+      "enabled": true
+    }
   },
-  "alphaDependencies": { "enabled": false },
+  "alphaDependencies": {
+    "enabled": false
+  },
   "enableSiteSettingsShortcut": false,
   "isChromeOSOnly": false,
   "isMetaQuest": false,
   "fullScopeUrl": "https://interviewace.umprintables.com/",
-  "minSdkVersion": 21,
-  "_comment": "Replace interviewace.umprintables.com with your real domain (no https:// prefix) before running bubblewrap."
+  "minSdkVersion": 23,
+  "orientation": "default",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "displayOverride": []
 }

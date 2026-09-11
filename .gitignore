@@ -55,3 +55,14 @@ server.log
 tool-results/
 scripts/creds/
 scripts/creds/*
+creds/
+
+# Android TWA build artifacts & secrets
+twa/android.keystore
+twa/.gradle/
+twa/app/build/
+twa/local.properties
+twa/*.apk
+twa/*.aab
+twa/app-release-*
+download/

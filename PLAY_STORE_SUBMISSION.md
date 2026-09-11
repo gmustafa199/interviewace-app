@@ -6,6 +6,26 @@ This document walks you through everything from "code is ready" to "app is live 
 
 ---
 
+## 🔐 BUILD FACTS (completed 2026-09-11 — keep this block safe)
+
+| Item | Value |
+|---|---|
+| Package ID | `com.interviewace.app` |
+| App version | 1.0.0 (versionCode 1) |
+| Signed AAB (upload to Play) | `download/interviewace-v1.0.0.aab` |
+| Signed test APK (sideload) | `download/interviewace-v1.0.0-test.apk` |
+| Keystore file | `twa/android.keystore` |
+| Keystore alias | `android` |
+| Keystore password | stored in `scripts/creds/keystore-info.txt` (NEVER commit, NEVER lose) |
+| Upload-key SHA-256 | `19:96:03:51:A3:D8:77:17:46:27:71:BA:5D:58:72:F0:B1:22:6F:F8:24:B9:16:A1:99:A3:16:12:D1:FE:14:2F` |
+| assetlinks.json | LIVE on production with upload-key fingerprint ✅ |
+| minSdk / targetSdk | 23 / 36 |
+| Rebuild command | `node scripts/twa-init.cjs` then `cd twa && BUBBLEWRAP_KEYSTORE_PASSWORD=<pass> BUBBLEWRAP_KEY_PASSWORD=<pass> bubblewrap build --type=bundle` |
+
+**Important:** After Google Play re-signs your app (App Signing), add Google's SHA-256 as a SECOND fingerprint in `assetlinks.json` (keep ours too) so both sideload and Play-distributed builds verify.
+
+---
+
 ## ✅ What's already done
 
 - [x] PWA manifest (`/public/manifest.json`) — app name, icons, theme color
