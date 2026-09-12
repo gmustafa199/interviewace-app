@@ -154,3 +154,20 @@ Stage Summary:
 - User must UNINSTALL old v1.0.0 test APK before installing v1.1.0 (new signing key).
 - Keystore v2 = permanent app identity; backup zip delivered; Play App Signing will make future loss recoverable.
 - android/ folder is openable in Android Studio via `npx cap open android` locally.
+
+---
+Task ID: 6
+Agent: Main agent (Super Z)
+Task: User requested "export both files as browser link" — deliver v1.1.0 AAB + APK as working browser download links.
+
+Work Log:
+- Confirmed deliverables on disk: download/interviewace-v1.1.0.aab (2,971,044 B) + download/interviewace-v1.1.0-test.apk (3,130,754 B).
+- Verified GitHub release v1.1.0-native assets: HTTP 200 on both download URLs.
+- Full byte-for-byte verification: downloaded both assets from GitHub, MD5 identical to local files (AAB 4355f0ca..., APK 69b1b8d6...).
+- Uploaded fresh tmpfiles.org links (60-min expiry, click-through page with Download button) as backup channel; verified pages live.
+- Old release v1.0.0-build still on repo (user never confirmed download; left in place).
+
+Stage Summary:
+- Persistent links: github.com/gmustafa199/interviewace-app/releases/download/v1.1.0-native/{interviewace-v1.1.0.aab, interviewace-v1.1.0-test.apk}
+- Temp links (60 min): tmpfiles.org/wpwfP3wscIqR/... (AAB), tmpfiles.org/wZwhP3wVc6N9/... (APK)
+- Keystore backup zip NOT uploaded (contains signing secrets; available on request).
