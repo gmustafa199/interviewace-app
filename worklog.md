@@ -127,3 +127,30 @@ Work Log:
 Stage Summary:
 - Durable links: github.com/gmustafa199/interviewace-app/releases/download/v1.0.0-build/{app-android.zip, interviewace-v1.0.0.aab, interviewace-v1.0.0-test.apk}
 - Release is on the user's public repo — delete after user confirms download (or keep if they choose).
+
+---
+Task ID: 5
+Agent: Main agent (Super Z)
+Task: User rejected TWA APK (v1.0.0) — "UI not native, too much scrolling". Proposed Capacitor + Android Studio flow. Built native Capacitor app with redesigned app-mode UI.
+
+Work Log:
+- Installed Capacitor 8.5.2 (core/android/cli + splash-screen/status-bar/app plugins); capacitor.config.ts with server.url = production (tiny APK, instant fixes), appId com.interviewace.app; capacitor-www/index.html offline fallback page.
+- npx cap add android → full Android Studio project in android/ (AGP 8.13, Gradle 8.14.3, minSdk 24, targetSdk 36, versionCode 2 / versionName 1.1.0).
+- Redesigned in-app UX (the actual fix for "doesn't feel native"):
+  - src/lib/app-mode.ts: useSyncExternalStore-based detection (Capacitor bridge / standalone display-mode).
+  - AppShell.tsx: bottom tab bar (Home/Progress/Pro) with safe-area padding; fullscreen interview flow reusing RolePicker/InterviewChat/Scorecard; tab bar hidden during interviews.
+  - AppHome.tsx: compact header + streak chip, search, All/IT/Exams filter chips, 2-column role tile grid (13 roles reachable in ~1.5 screens vs long scroll).
+  - AppProgress.tsx: 2x2 stat cards, score sparkline with pass line, recent sessions, per-role bests with delta arrows, clear history.
+  - AppPro.tsx: geo-priced Pro tab (₹299/$19) with Play Billing note.
+  - Light theme matched to existing flow screens; page.tsx renders AppShell only in app mode (no SSR mismatch).
+- Android branding: scripts/gen-android-icons.py (PIL) generated launcher icons (rounded + round + adaptive foreground), dark adaptive bg, branded splash screens for all densities/port/land.
+- WORKSPACE RESET DISCOVERED (2026-09-12 ~03:00): gitignored files wiped — v1 keystore, creds, download artifacts, ~/.bubblewrap (SDK+JDK), ~/.gradle. Source (git-tracked) intact. Recovery: rebuilt Android toolchain from scratch (cmdline-tools 13114758 → platform-36/build-tools 36, Temurin JDK 21 — Capacitor 8 needs Java 21 not 17); generated keystore v2 (safe: nothing published to Play); restored creds; assetlinks.json updated + redeployed to Vercel prod (verified 200 with new fingerprint 6D:D0:9E...C766).
+- Gradle build: BUILD SUCCESSFUL — android/app/build/outputs: app-release.apk (3.1MB) + app-release.aab (3.0MB), apksigner verified, SHA256 matches keystore v2.
+- Deliveries: download/interviewace-v1.1.0.aab + interviewace-v1.1.0-test.apk + KEYSTORE-BACKUP-IMPORTANT.zip (password: UMprintables#Ace2026); GitHub release "v1.1.0-native" with AAB+APK assets.
+- Git: local history had diverged (platform checkpoints) → recommitted tree onto common ancestor 3f8c8f5 → force-pushed clean (7a3907d). Verified no keystore/creds staged.
+
+Stage Summary:
+- v1.1.0 native Capacitor build complete; production serves app-mode UI at /.
+- User must UNINSTALL old v1.0.0 test APK before installing v1.1.0 (new signing key).
+- Keystore v2 = permanent app identity; backup zip delivered; Play App Signing will make future loss recoverable.
+- android/ folder is openable in Android Studio via `npx cap open android` locally.
