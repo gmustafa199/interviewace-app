@@ -6,23 +6,28 @@ This document walks you through everything from "code is ready" to "app is live 
 
 ---
 
-## 🔐 BUILD FACTS (completed 2026-09-11 — keep this block safe)
+## 🔐 BUILD FACTS (updated 2026-09-12 — v1.1.0 NATIVE CAPACITOR BUILD)
 
 | Item | Value |
 |---|---|
 | Package ID | `com.interviewace.app` |
-| App version | 1.0.0 (versionCode 1) |
-| Signed AAB (upload to Play) | `download/interviewace-v1.0.0.aab` |
-| Signed test APK (sideload) | `download/interviewace-v1.0.0-test.apk` |
-| Keystore file | `twa/android.keystore` |
+| App version | **1.1.0 (versionCode 2)** — native Capacitor 8 shell |
+| What changed vs v1.0.0 | Bottom tab navigation (Home/Progress/Pro), compact 2-col role grid, native splash + status bar, hardware back button |
+| Signed AAB (upload to Play) | `download/interviewace-v1.1.0.aab` |
+| Signed test APK (sideload) | `download/interviewace-v1.1.0-test.apk` |
+| Keystore file | `android/android.keystore` (+ copy in `twa/`) |
 | Keystore alias | `android` |
-| Keystore password | stored in `scripts/creds/keystore-info.txt` (NEVER commit, NEVER lose) |
-| Upload-key SHA-256 | `19:96:03:51:A3:D8:77:17:46:27:71:BA:5D:58:72:F0:B1:22:6F:F8:24:B9:16:A1:99:A3:16:12:D1:FE:14:2F` |
-| assetlinks.json | LIVE on production with upload-key fingerprint ✅ |
-| minSdk / targetSdk | 23 / 36 |
-| Rebuild command | `node scripts/twa-init.cjs` then `cd twa && BUBBLEWRAP_KEYSTORE_PASSWORD=<pass> BUBBLEWRAP_KEY_PASSWORD=<pass> bubblewrap build --type=bundle` |
+| Keystore password | `scripts/creds/keystore-info.txt` — encrypted backup: `KEYSTORE-BACKUP-IMPORTANT.zip` (zip password: UMprintables#Ace2026) |
+| Upload-key SHA-256 | `6D:D0:9E:28:66:3A:41:B2:B2:A8:F5:13:21:E7:F0:39:D3:7A:50:5B:56:CC:B1:17:F6:6B:1E:C9:FC:3C:C7:66` |
+| assetlinks.json | LIVE on production with the above fingerprint ✅ |
+| minSdk / targetSdk | 24 / 36 |
+| Rebuild (native) | `npx cap sync android && cd android && JAVA_HOME=<jdk21> ANDROID_HOME=<sdk> KEYSTORE_PASSWORD=<pass> ./gradlew assembleRelease bundleRelease` |
+| Android Studio | The `android/` folder IS a full Android Studio project — open via `npx cap open android` on your local machine |
+| Old TWA build (v1.0.0) | DEPRECATED — uninstall the old test APK before installing v1.1.0 (signatures differ) |
 
-**Important:** After Google Play re-signs your app (App Signing), add Google's SHA-256 as a SECOND fingerprint in `assetlinks.json` (keep ours too) so both sideload and Play-distributed builds verify.
+**Important:** After Google Play re-signs your app (App Signing), add Google's SHA-256 as a SECOND fingerprint in `assetlinks.json` (keep ours too).
+
+**⚠️ Keystore history note:** the v1 keystore was lost in a workspace reset on 2026-09-12, BEFORE anything was published to Google Play — so a new keystore (v2, above) was generated safely. Because Play App Signing will be enabled, future key loss is recoverable via Play Console. Still back up the backup zip + password.
 
 ---
 

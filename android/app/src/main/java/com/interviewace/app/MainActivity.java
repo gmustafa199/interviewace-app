@@ -1,0 +1,5 @@
+package com.interviewace.app;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {}

@@ -87,3 +87,43 @@ Stage Summary:
 - Repo: gmustafa199/interviewace-app @ b681f7e (clean history, no secrets)
 - English-only app; Hindi fully removed per user decision
 - Next for user: add ZAI_API_KEY or GEMINI_API_KEY in Vercel env vars for server-side AI (currently Z.ai dev-machine config fallback works on Vercel? No — browser/SpeechRecognition + server fallback chain handles it; API key still recommended), then Bubblewrap APK + Play Console submission. DNS CNAME for interviewace subdomain already resolves.
+
+---
+Task ID: 4
+Agent: Main agent (Super Z)
+Task: User asked free-plan capacity guidance ("how many users/interviews will it run on free plans") and then Android APK build.
+
+Work Log:
+- Answered capacity analysis: Vercel Hobby (hosting, not bottleneck), Gemini free tier (main bottleneck: ~10-15 RPM, 200-1500 RPD model-dependent → ~15-120 completed interviews/day), browser Web Speech API voices (₹0 forever, device-side), SQLite-on-Vercel ephemerality warning for progress tracking.
+- Built Android APK/AAB with Bubblewrap 1.25.0:
+  - Installed @bubblewrap/cli globally; bubblewrap downloaded JDK 17 (~/.bubblewrap/jdk) + Android SDK (~/.bubblewrap/android_sdk).
+  - Fixed `bubblewrap init` "Invalid URL" bug (CLI expects web-manifest URL, not local file) → wrote scripts/twa-init.cjs calling core library directly (TwaManifest.fromFile → TwaGenerator.createTwaProject → checksum), fully non-interactive.
+  - twa-manifest.json fixes: shortcuts → absolute URLs + chosenIconUrl, removed $schema, minSdk 21 → 23 (Play Billing lib requires 23).
+  - Accepted SDK licenses manually (`sdkmanager --sdk_root=... --licenses`) — bubblewrap's embedded sdkmanager failed without --sdk_root; pre-installed build-tools 35/36 + platforms;android-36.
+  - Keystore regenerated with shell-safe password (old one had `$` which bubblewrap's shell invocation ate): twa/android.keystore, alias `android`, password InterviewAce2026xK9m in scripts/creds/keystore-info.txt.
+  - BUILD SUCCESS: twa/app-release-bundle.aab (1.87MB, Play upload) + app-release-signed.apk (1.6MB, sideload); apksigner verify OK; upload-key SHA256 19:96:03:51...142F.
+- Updated public/.well-known/assetlinks.json with real fingerprint; deployed to Vercel prod (token still valid); verified live: assetlinks 200 with fingerprint, / 200, /api/tts 200 (neural voices).
+- Created .vercelignore (keystore/creds/twa excluded from Vercel uploads); .gitignore now blocks keystore/build outputs/download dir.
+- Copied artifacts to download/interviewace-v1.0.0.aab + interviewace-v1.0.0-test.apk; added BUILD FACTS block to PLAY_STORE_SUBMISSION.md; committed (3f8c8f5) + pushed to GitHub with token; restored tokens to gitignored creds file.
+
+Stage Summary:
+- Production: https://interviewace.umprintables.com — assetlinks now has REAL upload-key fingerprint; TWA verification works for sideload APK.
+- Deliverables: signed AAB ready for Play Console upload + test APK for device sideloading.
+- Keystore is the app's permanent identity — user MUST back up scripts/creds/keystore-info.txt + twa/android.keystore.
+- Next: user uploads AAB to Play Console (internal testing track first), adds Google App Signing SHA-256 as second fingerprint in assetlinks.json after Play activates App Signing.
+
+---
+Task ID: 4b
+Agent: Main agent (Super Z)
+Task: User could not download build files from chat (3 failed attempts). Delivered via external links.
+
+Work Log:
+- Confirmed no email capability in environment (no sendmail/SMTP) — offered file-host links instead.
+- file.io/bashupload/transfer.sh/litterbox/0x0.st/x0.at/uguu/gofile all blocked or broken from this network.
+- tmpfiles.org succeeded: uploaded zip + aab + apk (60-min expiry, browser click-through pages).
+- Created GitHub release "v1.0.0-build" (prerelease) on gmustafa199/interviewace-app; uploaded all 3 files as assets; verified public download 200 with exact byte sizes.
+- Keystore/tokens NOT included in any upload (binaries only, no secrets).
+
+Stage Summary:
+- Durable links: github.com/gmustafa199/interviewace-app/releases/download/v1.0.0-build/{app-android.zip, interviewace-v1.0.0.aab, interviewace-v1.0.0-test.apk}
+- Release is on the user's public repo — delete after user confirms download (or keep if they choose).

@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { LandingPage } from '@/components/interview/LandingPage';
 import { RolePicker } from '@/components/interview/RolePicker';
 import { InterviewChat } from '@/components/interview/InterviewChat';
 import { Scorecard } from '@/components/interview/Scorecard';
+import { AppShell } from '@/components/app/AppShell';
+import { isAppMode } from '@/lib/app-mode';
 import type { Role } from '@/lib/roles';
 
 type View = 'landing' | 'setup' | 'interview' | 'scorecard';
@@ -21,12 +23,18 @@ type InterviewConfig = {
   totalQuestions: number;
 };
 
+/** Static external value — never changes during a session. */
+const noopSubscribe = () => () => {};
+
 export default function Home() {
   const [view, setView] = useState<View>('landing');
   const [config, setConfig] = useState<InterviewConfig | null>(null);
   const [transcript, setTranscript] = useState<Message[]>([]);
   const [interviewDurationSec, setInterviewDurationSec] = useState(0);
   const [pendingRoleId, setPendingRoleId] = useState<string | undefined>();
+  // Native-feeling AppShell when running inside the Android app (Capacitor)
+  // or installed PWA/TWA. External-store read: no SSR mismatch, no effect.
+  const appMode = useSyncExternalStore(noopSubscribe, () => isAppMode(), () => false);
 
   function handleStartFromLanding() {
     setPendingRoleId(undefined);
@@ -69,6 +77,10 @@ export default function Home() {
     setConfig(null);
     setTranscript([]);
     window.scrollTo(0, 0);
+  }
+
+  if (appMode) {
+    return <AppShell />;
   }
 
   if (view === 'landing') {
