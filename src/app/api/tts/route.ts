@@ -16,7 +16,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { MsEdgeTTS, OUTPUT_FORMAT } from 'edge-tts-node';
+import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -165,16 +165,18 @@ async function synthesizeWithEdgeVoice(
       OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3
     );
 
-    const stream = tts.toStream(text, {
+    // msedge-tts returns { audioStream } — actively maintained client that
+    // generates the Sec-MS-GEC DRM token Microsoft now requires.
+    const { audioStream } = tts.toStream(text, {
       rate: pickRate(text, role),
       pitch: role.pitch,
     });
 
     const chunks: Buffer[] = [];
     const collectDone = new Promise<Buffer>((resolve, reject) => {
-      stream.on('data', (c: Buffer) => chunks.push(c));
-      stream.on('end', () => resolve(Buffer.concat(chunks)));
-      stream.on('error', reject);
+      audioStream.on('data', (c: Buffer) => chunks.push(c));
+      audioStream.on('end', () => resolve(Buffer.concat(chunks)));
+      audioStream.on('error', reject);
     });
 
     // Hard timeout — never let a stalled websocket exceed 12s
