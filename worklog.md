@@ -199,3 +199,21 @@ Stage Summary:
 - User must: replace index.html, add RECORD_AUDIO permission to APK manifest, rebuild APK.
 - Free-tier capacity: ~12-15 full interviews/day (Whisper bound), ~35/day AI-turn bound; ₹0 total cost.
 - Hindi board slot designed in (language param) for future.
+
+---
+Task ID: 8
+Agent: Main agent (Super Z)
+Task: Temporarily unlock the UPSC Interview feature (bypass Premium gate) so the user can test full interviews without an active subscription.
+
+Work Log:
+- Located the single premium gate: IVHome.entry() in download/upsc-gs-master-with-interview.html (verified no other isPremium() call exists in the IV engine; showScreen('interviewHome') hook has no premium check).
+- Added temporary flag: var IV_TEST_UNLOCK = true; next to IV constants, with a loud comment that it must be set to false (or deleted) before public release — Premium gating then resumes automatically.
+- Gate change: entry() now checks (!IV_TEST_UNLOCK && !isPremium()) — one-line, fully reversible.
+- Badge swap: when IV_TEST_UNLOCK is true, the home-grid card badge changes from saffron "PREMIUM" to green "FREE TEST" (runtime DOM tweak, no markup change) so the unlocked state is visually obvious on device.
+- Verification: node syntax check over all 70 script blocks = 0 errors. Headless (agent-browser) functional test with cleared localStorage (premium:false): IVHome.entry() → interviewHome visible (flex), paywall hidden (none) ✅; DAF filled + IV.begin() → passed validation and reached the "Microphone needed" mic-check modal (expected headless behavior — no mic device; on APK with RECORD_AUDIO permission it proceeds) ✅; badge reads "FREE TEST" ✅.
+- Delivery: replaced the GitHub Release asset on upsc-interview-v1 (deleted old asset id 571951388, uploaded new 345,145-byte file, HTTP 201); verified the public download URL serves the file containing IV_TEST_UNLOCK = true and size matches local copy byte-for-byte.
+
+Stage Summary:
+- Interview is now FREE for all users in this test build via a single clearly-marked flag (IV_TEST_UNLOCK=true, line ~6046).
+- To restore Premium-only: set IV_TEST_UNLOCK=false or delete the flag line — no other code changes needed.
+- User must re-download the HTML from Release upsc-interview-v1, replace index.html, rebuild APK to test on device.
