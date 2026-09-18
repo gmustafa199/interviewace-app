@@ -171,3 +171,31 @@ Stage Summary:
 - Persistent links: github.com/gmustafa199/interviewace-app/releases/download/v1.1.0-native/{interviewace-v1.1.0.aab, interviewace-v1.1.0-test.apk}
 - Temp links (60 min): tmpfiles.org/wpwfP3wscIqR/... (AAB), tmpfiles.org/wZwhP3wVc6N9/... (APK)
 - Keystore backup zip NOT uploaded (contains signing secrets; available on request).
+
+---
+Task ID: 7
+Agent: Main agent (Super Z)
+Task: Integrate the InterviewAce UPSC engine into the user's UPSC GS Master quiz app (20K+ questions) as a Premium-only, audio-only, full-board UPSC Personality Test. User requirements: full-length (not few questions), human-like board, NO TEXT audio-only, UPSC-only, highest quality. User answered clarifying questions: APK-only distribution, always full board, full DAF form, spoken verdict + written scorecard, premium-only, English (Hindi later).
+
+Work Log:
+- Backend (interviewace.umprintables.com on Vercel):
+  - Created src/lib/upsc.ts: 5 board personas (Chairman + Members 1-4), 8-phase scheduler across 28 questions (welcome→education→optional→state→current_affairs→ethics→hobby→closing), DAF injection, 11 human-likeness rules (handovers, acknowledgments, cross-references, counter-views, no feedback, no AI reveal), verdict+scorecard JSON prompt, realistic marks curve (avg 5/10 → ~172/275, 7/10 → ~202), parseSpeaker helper.
+  - /api/interview: mode 'upsc-full' + daf + language params; speaker-tagged output; temperature 0.85; backward-compatible with InterviewAce classic mode.
+  - /api/feedback: upsc-full branch returns structured JSON (verdict, recommendation, 6 dimensions, totalMarks/275, strengths, improvements, practicePlan) with tolerant JSON extraction + graceful degradation.
+  - /api/asr: added Groq Whisper (whisper-large-v3-turbo) provider — production path for APK WebView (no Web Speech API there); accepts webm/ogg/mp4/wav; ZAI remains provider 1.
+  - CORS (OPTIONS 204 + ACAO headers) added to all 4 API routes.
+  - Deployed to Vercel prod; live-verified: CORS preflight 204, Chairman DAF-based opening (used candidate name), Member 1 handover on education, TTS distinct voices (male Chairman 27KB vs female Member 2 18.6KB), ASR round-trip transcribed TTS audio word-perfect via Groq, scorecard returned 177/275 Borderline with per-dimension comments.
+- Frontend (user's index.html — surgical insertions, 5,808→6,764 lines):
+  - CSS module (~130 lines): tricolor design system — navy "Face the Board" hero, DAF form grid, dark immersive interview room (radial navy gradient), gold nameplate + speaking pulse ring + wave bars, mic orb with listening pulse rings, scorecard (marks hero, verdict card, animated dimension bars), modals.
+  - Home Explore grid: UPSC Interview card at position 1 with saffron PREMIUM badge.
+  - 3 new screens: interviewHome (hero + DAF form + tips + history), interviewLive (audio-only room: timer, Q counter, net dot, End button, nameplate, status, mic orb — zero question text shown), interviewFeedback (spoken verdict + full scorecard).
+  - JS engine (~700 lines): IVHome (premium gate via isPremium(), DAF persistence, history render), IV state machine (idle→board→listen→think loop, 28-question cap, auto-retry on network hiccups, abort safety on screen change), IVTTS (blob playback + browser-TTS fallback), dual ASR pipeline (webkitSpeechRecognition en-IN with silence auto-stop + auto-restart; fallback MediaRecorder with RMS silence detection → /api/asr Groq Whisper), endInterview (min 2 answers guard, feedback fetch with 2x silent self-heal retry), scorecard rendering with animated bars, history (30 sessions, viewable reports), wake lock, mock mode (?ivmock=1).
+  - showScreen: added interviewLive/interviewFeedback to noNav + interview render/abort hooks.
+- E2E test (agent-browser headless, mock mode): premium gate → paywall ✅; premium access ✅; DAF validation ✅; session flow reached Q9 in optional-subject phase and Q18 in current-affairs phase with correct member leads (phase scheduler verified) ✅; auto-recovery from transient Groq rate-limit ✅; End → confirm modal → assessment → scorecard 177/275 Borderline, 6 dims, personalized Chairman verdict citing DAF (Kathak) ✅; history saved + re-viewable ✅; screenshots captured for live room / scorecard / home card; fixed feedback retry self-heal + container padding during test.
+- Deliverables: download/upsc-gs-master-with-interview.html (drop-in replacement) + download/UPSC-INTERVIEW-INTEGRATION-GUIDE.md (3-step integration: replace file, RECORD_AUDIO manifest permission, test; cost table ~12-15 full interviews/day free; troubleshooting table).
+
+Stage Summary:
+- UPSC-only full-board interview is LIVE in the user's app file; backend live on Vercel with CORS.
+- User must: replace index.html, add RECORD_AUDIO permission to APK manifest, rebuild APK.
+- Free-tier capacity: ~12-15 full interviews/day (Whisper bound), ~35/day AI-turn bound; ₹0 total cost.
+- Hindi board slot designed in (language param) for future.

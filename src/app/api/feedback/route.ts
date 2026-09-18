@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unifiedChat } from '@/lib/ai';
 import { getRoleById, type ScoringDimension } from '@/lib/roles';
+import { buildUPSCVerdictPrompt, marksOutOf275, type DAF } from '@/lib/upsc';
 import type { DimensionScore } from '@/lib/progress';
 
 export const runtime = 'nodejs';
@@ -15,7 +16,20 @@ type RequestBody = {
   role: string;
   difficulty: string;
   transcript: Message[];
+  mode?: 'classic' | 'upsc-full';
+  daf?: DAF;
 };
+
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Max-Age': '86400',
+} as const;
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
+}
 
 function buildScorecardSection(dimensions: ScoringDimension[] | undefined): string {
   if (!dimensions || dimensions.length === 0) {
@@ -87,6 +101,10 @@ ${transcriptStr}
 [Now write the scorecard. Output ONLY the scorecard in markdown.]`;
 }
 
+/* ------------------------------------------------------------------ */
+/* API                                                                */
+/* ------------------------------------------------------------------ */
+
 export async function POST(req: NextRequest) {
   try {
     const body: RequestBody = await req.json();
@@ -112,6 +130,73 @@ export async function POST(req: NextRequest) {
       })
       .join('\n\n');
 
+    // ── UPSC FULL BOARD scorecard: structured JSON + spoken verdict ──
+    if (body.mode === 'upsc-full' && roleInfo.id === 'upsc-cse') {
+      const raw = (transcript || [])
+        .filter((m) => m.role !== 'system' && m.content)
+        .map((m) => (m.role === 'assistant' ? m.content : `CANDIDATE: ${m.content}`))
+        .join('\n\n');
+
+      const completion = await unifiedChat({
+        messages: [{
+          role: 'user',
+          content: buildUPSCVerdictPrompt(body.daf || {}, raw),
+        }],
+        temperature: 0.4,
+        max_tokens: 2200,
+      });
+
+      let text = completion.choices[0]?.message?.content || '';
+      // Tolerant JSON extraction (handles stray fences/prose)
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) text = jsonMatch[0];
+
+      try {
+        const parsed = JSON.parse(text);
+        const dims = Array.isArray(parsed.dimensions) ? parsed.dimensions : [];
+        const dimensionScores: DimensionScore[] = dims.map((d: any) => ({
+          key: String(d.key || d.label || '').toLowerCase().replace(/[^a-z]+/g, '_'),
+          label: String(d.label || d.key || ''),
+          score: Math.max(0, Math.min(10, Number(d.score) || 0)),
+        }));
+
+        return NextResponse.json(
+          {
+            mode: 'upsc-full',
+            verdict: String(parsed.verdict || ''),          // spoken by the Chairman
+            recommendation: String(parsed.recommendation || ''),
+            dimensions: dims,
+            dimensionScores,
+            totalMarks: marksOutOf275(dimensionScores),      // out of 275, realistic curve
+            maxMarks: 275,
+            strengths: parsed.strengths || [],
+            improvements: parsed.improvements || [],
+            practicePlan: parsed.practicePlan || [],
+          },
+          { headers: CORS }
+        );
+      } catch (parseErr) {
+        // AI returned malformed JSON — degrade gracefully instead of failing
+        return NextResponse.json(
+          {
+            mode: 'upsc-full',
+            verdict: '',
+            recommendation: 'Assessment unavailable',
+            dimensions: [],
+            dimensionScores: [],
+            totalMarks: null,
+            maxMarks: 275,
+            strengths: [],
+            improvements: [],
+            practicePlan: [],
+            rawText: text.slice(0, 4000),
+          },
+          { headers: CORS }
+        );
+      }
+    }
+
+    // ── Classic markdown scorecard (InterviewAce app) ──
     const scoringSection = buildScorecardSection(roleInfo.scoringDimensions);
     const isExam = roleInfo.domain === 'IndianExam';
 
@@ -153,16 +238,19 @@ export async function POST(req: NextRequest) {
       dimensionScores.push({ key, label, score });
     }
 
-    return NextResponse.json({
-      feedback,
-      overallScore,
-      dimensionScores,
-    });
+    return NextResponse.json(
+      {
+        feedback,
+        overallScore,
+        dimensionScores,
+      },
+      { headers: CORS }
+    );
   } catch (err: any) {
     console.error('Feedback API error:', err);
     return NextResponse.json(
       { error: err?.message || 'Failed to generate feedback' },
-      { status: 500 }
+      { status: 500, headers: CORS }
     );
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unifiedChat } from '@/lib/ai';
 import { getRoleById, type Role } from '@/lib/roles';
+import { buildUPSCInstructions, type DAF, parseSpeaker } from '@/lib/upsc';
 
 export const runtime = 'nodejs';
 export const maxDuration = 90; // Vercel Hobby=60, Pro=300. 90s gives retry logic headroom.
@@ -16,7 +17,25 @@ type RequestBody = {
   messages: Message[];
   questionNumber: number;
   totalQuestions: number;
+  mode?: 'classic' | 'upsc-full';
+  daf?: DAF;
+  language?: string;
 };
+
+/* ------------------------------------------------------------------ */
+/* CORS — the UPSC GS Master APK/WebView calls these APIs cross-origin */
+/* ------------------------------------------------------------------ */
+
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Max-Age': '86400',
+} as const;
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
+}
 
 /* ------------------------------------------------------------------ */
 /* Difficulty guides per domain                                       */
@@ -174,12 +193,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid role: ' + role }, { status: 400 });
     }
 
-    const instructions = buildInstructions(
-      roleInfo,
-      difficulty || 'mid',
-      questionNumber || 1,
-      totalQuestions || 8
-    );
+    // ── UPSC FULL BOARD mode (UPSC GS Master integration) ──
+    // DAF-driven 5-member simulation. mode:'upsc-full' opts in; the classic
+    // exam path stays untouched for the InterviewAce app.
+    const instructions =
+      body.mode === 'upsc-full' && roleInfo.id === 'upsc-cse'
+        ? buildUPSCInstructions(
+            body.daf || {},
+            questionNumber || 1,
+            totalQuestions || 28,
+            body.language || 'en'
+          )
+        : buildInstructions(
+            roleInfo,
+            difficulty || 'mid',
+            questionNumber || 1,
+            totalQuestions || 8
+          );
 
     // Filter history (drop system + empty messages)
     const safeHistory = (messages || []).filter(
@@ -210,21 +240,30 @@ ${transcriptStr}
 
     const completion = await unifiedChat({
       messages: [{ role: 'user', content: userTurn }],
-      temperature: 0.7,
+      temperature: body.mode === 'upsc-full' ? 0.85 : 0.7, // board rooms breathe a little more
       max_tokens: 2048, // was 500 — too low, caused truncation mid-sentence
     });
 
-    const reply = completion.choices[0]?.message?.content || '';
+    let reply = completion.choices[0]?.message?.content || '';
 
-    return NextResponse.json({
-      reply,
-      questionNumber,
-    });
+    // UPSC full-board mode: split tag from speech so the client gets a
+    // clean speaker + text (voice mapping + nameplate) without parsing.
+    let speaker: string | null = null;
+    if (body.mode === 'upsc-full') {
+      const parsed = parseSpeaker(reply);
+      speaker = parsed.speaker;
+      reply = parsed.text;
+    }
+
+    return NextResponse.json(
+      { reply, speaker, questionNumber },
+      { headers: CORS }
+    );
   } catch (err: any) {
     console.error('Interview API error:', err);
     return NextResponse.json(
       { error: err?.message || 'Failed to generate interviewer response' },
-      { status: 500 }
+      { status: 500, headers: CORS }
     );
   }
 }

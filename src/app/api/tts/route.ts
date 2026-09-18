@@ -21,6 +21,18 @@ import { MsEdgeTTS, OUTPUT_FORMAT } from 'edge-tts-node';
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
+/* CORS — the UPSC GS Master APK/WebView calls this API cross-origin */
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Max-Age': '86400',
+} as const;
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
+}
+
 type RequestBody = {
   text: string;
   speaker?: string | null;
@@ -243,6 +255,7 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'audio/mpeg',
           'Content-Length': edgeBuffer.length.toString(),
           'Cache-Control': 'no-store',
+          ...CORS,
         },
       });
     }
@@ -256,6 +269,7 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'audio/mpeg',
           'Content-Length': gttsBuffer.length.toString(),
           'Cache-Control': 'no-store',
+          ...CORS,
         },
       });
     }
@@ -267,7 +281,7 @@ export async function POST(req: NextRequest) {
       rate: speed || 0.92,
       pitch: speaker && speaker.toLowerCase().includes('chairman') ? 0.94 : 1.0,
       lang: 'en-IN',
-    });
+    }, { headers: CORS });
   } catch (err: any) {
     console.error('TTS API error:', err);
     return NextResponse.json({
@@ -276,6 +290,6 @@ export async function POST(req: NextRequest) {
       rate: 0.92,
       lang: 'en-IN',
       error: err?.message,
-    });
+    }, { headers: CORS });
   }
 }
