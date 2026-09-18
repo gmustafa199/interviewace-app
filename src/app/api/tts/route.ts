@@ -37,59 +37,101 @@ type RequestBody = {
   text: string;
   speaker?: string | null;
   speed?: number;
+  voice?: string | null; // optional explicit voice override (testing / future Hindi board)
 };
 
 /* ------------------------------------------------------------------ */
-/* Voice assignment — different panelists get different neural voices */
+/* Voice cast — Azure NEXT-GEN neural voices (dramatically more human  */
+/* than the older en-IN set). The Multilingual generation (Andrew,     */
+/* Emma, Ava, Brian) is currently the most natural-sounding voice      */
+/* family available; each board member gets a distinct persona with    */
+/* tuned rate/pitch. en-IN voices remain as automatic fallbacks so an  */
+/* Indian accent is always available if a primary voice is cut off.    */
 /* ------------------------------------------------------------------ */
 
-const VOICE_FEMALE = 'en-IN-NeerjaNeural'; // warm, professional female (India)
-const VOICE_MALE = 'en-IN-PrabhatNeural'; // measured, authoritative male (India)
+type VoiceRole = {
+  primary: string;   // next-gen voice tried first
+  fallback: string;  // proven en-IN voice if primary unavailable
+  rate: string;      // measured, senior-professional pace
+  pitch: string;     // subtle separation between same-gender members
+};
 
-function pickVoice(speaker?: string | null): string {
-  if (!speaker) return VOICE_FEMALE; // single IT interviewer — default
+const DEFAULT_FEMALE: VoiceRole = {
+  primary: 'en-US-EmmaMultilingualNeural',
+  fallback: 'en-IN-NeerjaNeural',
+  rate: '-4%',
+  pitch: '+0Hz',
+};
+const DEFAULT_MALE: VoiceRole = {
+  primary: 'en-US-AndrewMultilingualNeural',
+  fallback: 'en-IN-PrabhatNeural',
+  rate: '-6%',
+  pitch: '-2Hz',
+};
+
+const VOICE_CAST: Record<string, VoiceRole> = {
+  chairman: {
+    primary: 'en-US-AndrewMultilingualNeural',   // deep, warm, authoritative
+    fallback: 'en-IN-PrabhatNeural',
+    rate: '-6%',
+    pitch: '-2Hz',
+  },
+  'member 1': {
+    primary: 'en-US-EmmaMultilingualNeural',     // precise, academic female
+    fallback: 'en-IN-NeerjaNeural',
+    rate: '-4%',
+    pitch: '+0Hz',
+  },
+  'member 2': {
+    primary: 'en-US-BrianMultilingualNeural',    // measured policy-male
+    fallback: 'en-IN-PrabhatNeural',
+    rate: '-5%',
+    pitch: '+0Hz',
+  },
+  'member 3': {
+    primary: 'en-US-AvaMultilingualNeural',      // expressive, empathetic female
+    fallback: 'en-IN-NeerjaNeural',
+    rate: '-4%',
+    pitch: '+1Hz',
+  },
+  'member 4': {
+    primary: 'en-GB-RyanNeural',                 // crisp British member
+    fallback: 'en-IN-PrabhatNeural',
+    rate: '-5%',
+    pitch: '-1Hz',
+  },
+};
+
+function pickVoiceRole(speaker?: string | null): VoiceRole {
+  if (!speaker) return DEFAULT_FEMALE; // single interviewer (InterviewAce classic mode)
   const s = speaker.toLowerCase();
-  if (s.includes('chairman')) return VOICE_MALE; // UPSC-style chairman
+  if (VOICE_CAST[s]) return VOICE_CAST[s];
+  if (s.includes('chairman')) return VOICE_CAST.chairman;
   const memberMatch = s.match(/(\d+)/);
   if (memberMatch) {
-    // Alternate voices across panel members: odd → male, even → female
-    return parseInt(memberMatch[1], 10) % 2 === 1 ? VOICE_MALE : VOICE_FEMALE;
+    const key = 'member ' + memberMatch[1];
+    return VOICE_CAST[key] || (parseInt(memberMatch[1], 10) % 2 === 1 ? DEFAULT_MALE : DEFAULT_FEMALE);
   }
-  if (s.includes('interviewer') || s.includes('panelist')) return VOICE_MALE;
-  return VOICE_FEMALE;
-}
-
-/** Per-speaker pitch offset so two same-gender voices still differ. */
-function pickPitch(speaker?: string | null): string {
-  if (!speaker) return '+0Hz';
-  const s = speaker.toLowerCase();
-  if (s.includes('chairman')) return '-2Hz';
-  const memberMatch = s.match(/(\d+)/);
-  if (memberMatch) {
-    const n = parseInt(memberMatch[1], 10);
-    return n % 2 === 1 ? '+1Hz' : '-1Hz';
-  }
-  return '+0Hz';
+  if (s.includes('interviewer') || s.includes('panelist')) return DEFAULT_MALE;
+  return DEFAULT_FEMALE;
 }
 
 /**
  * Prosody — the details that make it sound like a person:
- * - Interviewers speak measurably slower than default TTS (≈ -8%)
+ * - Senior interviewers speak measurably slower than default TTS
  * - Questions slow down slightly more (deliberate, probing delivery)
  * - Very short sentences get a touch more energy
  */
-function pickRate(text: string, speaker?: string | null): string {
+function pickRate(text: string, role: VoiceRole): string {
   const trimmed = text.trim();
   const isQuestion = /\?\s*$/.test(trimmed);
   const wordCount = trimmed.split(/\s+/).length;
 
-  let ratePct = -8; // base: measured, senior-professional pace
+  const base = parseInt(role.rate.replace('%', ''), 10); // per-voice measured pace
+  let ratePct = base;
   if (isQuestion) ratePct -= 2; // probing questions land slower
   if (wordCount <= 6) ratePct += 3; // short lines: natural lift
   if (wordCount > 28) ratePct += 2; // long sentences: avoid dragging
-
-  // Male voices read a touch faster at same rate setting
-  if (pickVoice(speaker) === VOICE_MALE) ratePct += 1;
 
   const clamped = Math.max(-15, Math.min(5, ratePct));
   return `${clamped >= 0 ? '+' : ''}${clamped}%`;
@@ -101,18 +143,31 @@ function pickRate(text: string, speaker?: string | null): string {
 
 async function synthesizeWithEdge(
   text: string,
-  speaker?: string | null
+  role: VoiceRole
+): Promise<{ buffer: Buffer; voice: string } | null> {
+  // Try the next-gen primary voice first, then the proven en-IN fallback
+  for (const voice of [role.primary, role.fallback]) {
+    const buf = await synthesizeWithEdgeVoice(text, voice, role);
+    if (buf) return { buffer: buf, voice };
+  }
+  return null;
+}
+
+async function synthesizeWithEdgeVoice(
+  text: string,
+  voice: string,
+  role: VoiceRole
 ): Promise<Buffer | null> {
   const tts = new MsEdgeTTS({ enableLogger: false });
   try {
     await tts.setMetadata(
-      pickVoice(speaker),
+      voice,
       OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3
     );
 
     const stream = tts.toStream(text, {
-      rate: pickRate(text, speaker),
-      pitch: pickPitch(speaker),
+      rate: pickRate(text, role),
+      pitch: role.pitch,
     });
 
     const chunks: Buffer[] = [];
@@ -246,14 +301,19 @@ export async function POST(req: NextRequest) {
     text = text.replace(/`([^`]+)`/g, '$1');
     text = text.slice(0, 1200);
 
-    // 1) Edge neural voices — the human-sounding tier
-    const edgeBuffer = await synthesizeWithEdge(text, speaker);
-    if (edgeBuffer) {
-      return new NextResponse(edgeBuffer, {
+    const role: VoiceRole = body.voice
+      ? { primary: body.voice, fallback: 'en-IN-NeerjaNeural', rate: '-5%', pitch: '+0Hz' }
+      : pickVoiceRole(speaker);
+
+    // 1) Next-gen neural voices — the human-sounding tier
+    const edge = await synthesizeWithEdge(text, role);
+    if (edge) {
+      return new NextResponse(new Uint8Array(edge.buffer), {
         status: 200,
         headers: {
           'Content-Type': 'audio/mpeg',
-          'Content-Length': edgeBuffer.length.toString(),
+          'Content-Length': edge.buffer.length.toString(),
+          'X-TTS-Voice': edge.voice,
           'Cache-Control': 'no-store',
           ...CORS,
         },
@@ -263,7 +323,7 @@ export async function POST(req: NextRequest) {
     // 2) Google Translate TTS
     const gttsBuffer = await fetchGoogleTTS(text);
     if (gttsBuffer && gttsBuffer.length > 1000) {
-      return new NextResponse(gttsBuffer, {
+      return new NextResponse(new Uint8Array(gttsBuffer), {
         status: 200,
         headers: {
           'Content-Type': 'audio/mpeg',
